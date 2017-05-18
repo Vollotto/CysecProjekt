@@ -59,7 +59,7 @@ Stealthiness:
 	> accounts (e.g. mail)
 	> other possible user data
 
-TODO: come up with overview about common anti-analysis techniques specific to Android/mobile MW?
+[TODO: come up with overview about common anti-analysis techniques specific to Android/mobile MW?]
 
 *****************
 
