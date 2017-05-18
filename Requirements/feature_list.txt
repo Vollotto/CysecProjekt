@@ -3,10 +3,20 @@ Behaviour collection:
 	a) Java
 	b) native code ('.so' files)
 
+=> if Dalvik: modify/hook Dalvik VM to trace function calls of bytecode
+=> if ART:	ask Olli for ARTist; Qemu-level; previous bytecode rewriting;
+
+=> checkout Android Systrace, whether it could be useful for library calls
+
 - middleware with focus on interaction with target app; we want to be able to capture:
 	a) calls of MW to system services via IPC (e.g. to Telephony service)
 	b) sending of intents and broadcasts to other apps / services (e.g. deliver payload via intents)
 	c) delivery of (result) messages to MW (e.g. also intercepted broadcasts / intents)
+
+=> Binder as mediator of all IPC calls could be a central point for hooking + tracing such events; Binder tokens must be translated to understandable format
+
+=> could also patch entries to middleware functions (AOSP)
+
 
 - network traffic
 	a) from MW
@@ -14,13 +24,7 @@ Behaviour collection:
 
 => Output: trace file(s) + network traffic file(s)
 
-Notes:
-	- maybe setting up VPN on-device might be useful for collecting only network data related to MW
-	- different approaches for function tracing:
-		> system patching (AOSP)
-		> inline hooks via app rewriting (e.g. like AppGuard)
-		> inline hooks via Artist use (at compile time)
-		more?
+=> checkout whether VPN on-device might be useful for collecting only network data of target app
 
 *****************
 
@@ -32,8 +36,8 @@ App exploration:
 	b) enter into text field
 	more?
 
-TODO: what about dynamically registered b.receivers?
-TODO: native code interfaces / APIs?
+[TODO: what about dynamically registered b.receivers?]
+[TODO: native code interfaces / APIs?]
 
 Notes: 
 	- checkout DroidMate library - (https://github.com/konrad-jamrozik/droidmate)
