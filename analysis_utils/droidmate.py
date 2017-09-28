@@ -11,7 +11,7 @@ class Droidmate:
         # flag that shows if we are connected to the Droidmate socket
         self.connected = False
         # path = path/to/droidmate/gradlew
-        path = os.path.dirname(os.path.abspath(__file__)) + '/gradlew'
+        path = os.path.dirname(os.path.abspath(__file__)) + '/droidmate/dev/droidmate/gradlew'
         droidmate_cmd = path + " clean :p:com:run"
         print(path)
         # subprocess for droidmate
