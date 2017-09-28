@@ -1,1 +1,0 @@
--deployRawApks true -runOnNotInlined -uninstallApk false
