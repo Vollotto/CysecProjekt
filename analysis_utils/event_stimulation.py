@@ -23,7 +23,7 @@ class EventStimulation:
             action = self.system_events[count]
             count += 1
             self.log('Sending system event -- action: ' + action)
-            self.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + package)[1])
+            self.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
             wait = randint(5, 12)
             self.log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)

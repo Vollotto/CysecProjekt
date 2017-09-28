@@ -37,7 +37,7 @@ class Androguard:
         main_activity = androlyzed_apk.get_main_activity()
         cmd = 'am start -n \"' + package + '/' + main_activity + '\"'
         adbutils.adb_shell(cmd, device="emulator-5554")
-        Androguard.get_pid(package)
+        return Androguard.get_pid(package)
 
     def explore(self, droidmate):
         pids = []
@@ -147,7 +147,6 @@ class Androguard:
             self.provider_max = len(provider_list)
             self.log("#####PROVIDERS#####")
             for provider in provider_list:
-                provider = str(provider, "ascii")
                 if '[' in provider and ']:' in provider:
                     provider = re.sub('\[|\]|\s|:', '', provider)
                     self.log(provider)
