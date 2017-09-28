@@ -4,7 +4,7 @@ import time
 from subprocess import check_output, CalledProcessError
 from analysis_utils import adbutils
 from androguard.core.bytecodes import apk
-from analysis_utils.droidmate.droidmate import Droidmate
+from analysis_utils.droidmate import Droidmate
 
 
 class Androguard:
@@ -46,7 +46,7 @@ class Androguard:
             # pass target apk to droidmate
             apk_file = "Fail"
             try:
-                apk_file = str(check_output("pwd", shell=True), "ascii").strip("\n") + "/analysis_utils/droidmate/apks"
+                apk_file = str(check_output("pwd", shell=True), "ascii").strip("\n") + "/analysis_utils/droidmate/dev/droidmate/apks"
                 check_output("rm -r " + apk_file + "/*", shell=True)
             except CalledProcessError:
                 pass
@@ -96,6 +96,7 @@ class Androguard:
             self.service_max = len(service_list)
             self.log("#####SERVICES#####")
             for service in service_list:
+                service = str(service, "ascii")
                 self.log(service)
                 self.explore_service(service, package_name, droidmate_conn)
                 # start the main activity to reset the app
@@ -111,6 +112,7 @@ class Androguard:
             self.receiver_max = len(receiver_list)
             self.log("#####RECEIVERS#####")
             for receiver in receiver_list:
+                receiver = str(receiver, "ascii")
                 self.log(receiver)
                 # we need the corresponding intent filters
                 intent_filter = androlyzed_apk.get_intent_filters("receiver", receiver)
@@ -145,6 +147,7 @@ class Androguard:
             self.provider_max = len(provider_list)
             self.log("#####PROVIDERS#####")
             for provider in provider_list:
+                provider = str(provider, "ascii")
                 if '[' in provider and ']:' in provider:
                     provider = re.sub('\[|\]|\s|:', '', provider)
                     self.log(provider)
@@ -156,6 +159,7 @@ class Androguard:
             self.activity_max = len(activities)
             self.log("#####ACTIVITIES#####")
             for activity in activities:
+                activity  = str(activity, "ascii")
                 self.log(activity)
                 pid = self.explore_activity(activity, package_name, droidmate_conn)
                 self.activity_count += 1
