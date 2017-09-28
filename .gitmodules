@@ -3,3 +3,6 @@
 	path = analysis_utils/droidmate
 	url = https://github.com/konrad-jamrozik/droidmate.git
 t
+[submodule "androguard"]
+	path = androguard
+	url = https://github.com/androguard/androguard.git
