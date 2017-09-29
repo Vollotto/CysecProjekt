@@ -195,7 +195,6 @@ class Androguard:
     @staticmethod
     def get_pid(package):
         cmd = 'ps | grep ' + package
-        output = adbutils.adb_shell(cmd, device="emulator-5554", timeout=180)[1]
         check = False
         for i in range(0, 60):
             time.sleep(1)
@@ -205,7 +204,10 @@ class Androguard:
         if not check:
             raise TimeoutError
         output = re.sub('\s+', ',', output)
-        pid = output.split(',')[1]
+        try:
+            pid = output.split(',')[1]
+        except IndexError:
+            return None
         return pid
 
     def explore_provider(self, provider):

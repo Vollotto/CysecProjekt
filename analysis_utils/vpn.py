@@ -57,5 +57,5 @@ class Vpn:
 
     def cleanup(self, path):
         vpn_count = subprocess.check_output("ls " + path, shell=True).decode().count("vpn")
-        cmd = "mv " + self.path + " " + path + "vpn" + str(random.randint(0, 1000)) + ".pcap"
+        cmd = "mv " + self.path + " " + path + "vpn" + str(vpn_count) + ".pcap"
         subprocess.check_output(cmd, shell=True)
