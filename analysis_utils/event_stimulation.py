@@ -13,7 +13,6 @@ class EventStimulation:
         self.term = False
         self.lock = threading.Lock()
         self.package = package
-        self.output = open(output_path, "w")
         path = os.getcwd() + '/broadcast_actions.txt'
         with open(path) as events:
             self.system_events = events.read().splitlines()
@@ -41,7 +40,7 @@ class EventStimulation:
         return tmp
 
     def log(self, log_string):
-        self.output.write('[' + str(datetime.datetime.now()) + '] ' + log_string + "\n")
+        print('[' + str(datetime.datetime.now()) + '] ' + log_string + "\n")
 
     def interrupt(self):
         self.lock.acquire()

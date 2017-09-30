@@ -105,11 +105,11 @@ class Runner(object):
         return True
 
     @staticmethod
-    def kill_emulator(snapshot):
+    def kill_emulator(snapshot, name):
         
         try:
             if snapshot:
-                check_output("VBoxManage snapshot LInux take 'TODO'", shell=True)
+                check_output("VBoxManage snapshot LInux take " + name, shell=True)
             java_pids = str(check_output("pgrep java", shell=True), "ascii").split("\n")
             for pid in java_pids[:-1]:
                 try:
@@ -135,7 +135,7 @@ class Runner(object):
         if not emulator:
             print("Trying to start emulator for the second time.")
             # in case starting failed cause emulator is still running
-            Runner.kill_emulator(False)
+            Runner.kill_emulator(False, "")
             emulator = Runner.setup()
             if not emulator:
                 sys.exit("Failed to setup emulator.")
@@ -156,7 +156,7 @@ class Runner(object):
                 # stop all modules running
                 print(self.control.stop())
                 # kill emulator
-                Runner.kill_emulator(self.snapshot)
+                Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
             else:
                 # start app and select pid
                 self.control.generate_pid()
@@ -200,19 +200,19 @@ class Runner(object):
                             # stop command ends analysis
                             if command[0] == "stop":
                                 print(self.control.stop())
-                                Runner.kill_emulator(self.snapshot)
+                                Runner.kill_emulator(self.snapshot, apk.split("/")[-1] )
                                 break
                             print("Invalid command.")
         # catch all Exceptions to avoid interferring with later runs
         except KeyboardInterrupt as key:
             print(key.args)
             print(self.control.stop())
-            Runner.kill_emulator(self.snapshot)
+            Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
             raise
         except Exception as err:
             print(err.args)
             print(self.control.stop())
-            Runner.kill_emulator(self.snapshot)
+            Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
             raise
 
 

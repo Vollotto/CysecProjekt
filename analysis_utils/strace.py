@@ -41,52 +41,15 @@ class Strace:
         # extract pid from ps output
         ps_out_stripped = (ps_out.strip("\n"))
         pid = re.sub("\s+", ",", ps_out_stripped).split(",")[1]
-        # setup netcat to listen to the output send from emulator
-        log_cmd = "netcat -p 40333 -l > " + self.path
-        try:
-            self.log_proc = Popen(log_cmd, shell=True)
-        except CalledProcessError as e:
-            raise RuntimeError(e.output)
-        # start strace and send output over netcat to host
-        strace_cmd = "'./data/local/strace_log.sh " + pid + "&'"
-        strace_success, strace_proc = adbutils.adb_popen(strace_cmd)
-        if not strace_success:
-            raise RuntimeError(strace_proc)
-        # wait until first output gets written to output file
-        exists = False
-        output_file = None
-        for i in range(0, 20):
-            try:
-                output_file = open(self.path, "r")
-                exists = True
-                break
-            except IOError:
-                exists = False
-        if not exists:
-            self.log_proc.kill()
-            raise RuntimeError("Failed to open logfile.")
-        strace_success = output_file.readline()
-        for i in range(0, 15):
-            sleep(1)
-            strace_success = output_file.readline()
-            if strace_success != "":
-                break
-        output_file.close()
-        # check if setting up the logging and strace was successful
-        if "attached" not in strace_success:
-            # strace could not be started
-            # send feedback to main thread
-            self.log_proc.kill()
-            raise RuntimeError("Failed to start strace:\n" + strace_success)
-        self.running = True
-        strace_proc.kill()
-        return
+        
+        adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
+        strace_cmd = adb_path + "adb shell strace -f -p " + pid + " > " + self.path
+        print(strace_cmd)
+        self.strace_proc = Popen(strace_cmd, shell=True)
 
     def stop(self, path):
         if self.running:
-            self.log_proc.kill()
-            self.log_proc = None
-            self.running = False
+            self.strace_proc.kill()
             try:
                 pgrep_success, pgrep_out = adbutils.adb_shell("pgrep strace", device="emulator-5554", timeout=30)
             except TimeoutError:

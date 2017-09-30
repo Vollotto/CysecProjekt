@@ -78,7 +78,7 @@ def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False, ti
         + ' shell ' \
         + command
     try:
-        out = Popen(cmd, timeout=timeout, shell=True)
+        out = Popen(cmd, shell=True)
         success = True
     except CalledProcessError as e:
         # if executing command fails restart adb once in case its the cause 
@@ -99,7 +99,8 @@ def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=Fa
         # if executing command fails restart adb once in case its the cause 
         # else return success=False
         if (not reset) and (reset_adb()):
-            return shell(command, string_out, timeout=timeout, reset=True)
+            return shell(command, timeout=timeout, reset=True)
+             
         out = e.output
         result = e.returncode
     except TimeoutExpired:

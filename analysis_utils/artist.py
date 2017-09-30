@@ -8,6 +8,7 @@ class Artist:
     def __init__(self, path):
         self.path = path
         self.log_proc = None
+        self.artist_proc = None
         self.running = False
 
     @staticmethod
@@ -118,32 +119,16 @@ class Artist:
         return True
 
     def setup(self):
-        log_cmd = "netcat -p 40753 -l > " + self.path
-        try:
-            self.log_proc = Popen(log_cmd, shell=True)
-        except CalledProcessError as e:
-            raise RuntimeError(e.output)
-        netcat_success = False
-        for i in range(0, 30):
-            try:
-                check_output("ls " + self.path, shell=True)
-                netcat_success = True
-                break
-            except CalledProcessError:
-                sleep(1)
-        if not netcat_success:
-            raise RuntimeError
-        artist_cmd = "/home/tobki/Projects/CysecProject/android-sdk_eng.cysecprojekt_linux-x86/" \
-                     "platform-tools/adb shell 'logcat 2>&1 | nc 192.168.56.1 40753&'"
-        artist_proc = Popen(artist_cmd, shell=True, stdout=PIPE)
-        sleep(10)
-        artist_proc.kill()
-        self.running = True
+        adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
+        artist_cmd = adb_path + "adb logcat > " + self.path
+        self.artist_proc = Popen(artist_cmd, shell=True)
+        
+
 
     def stop(self, path):
         if self.running:
             # stop subprocess and cleanup logs
-            self.log_proc.kill()
+            self.artist_proc.kill()
             self.cleanup(path)
 
     def cleanup(self, path):
