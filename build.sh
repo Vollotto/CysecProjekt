@@ -19,9 +19,11 @@ cd analysis_utils/droidmate
 
 git apply droidmate.patch
 
+cd ../..
+
 mv gradlew.patch analysis_utils/droidmate/dev/droidmate/gradlew.patch
 
-cd dev/droidmate/
+cd analysis_utils/droidmate/dev/droidmate/
 
 patch gradlew < gradlew.patch
 
