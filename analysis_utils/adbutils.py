@@ -69,7 +69,7 @@ def adb_shell(command: str, string_out: bool=True, device: Union[str, None]=None
 
 
 # start subprocess for the given adb command
-def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False) -> Tuple[bool, str]:
+def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False, timeout: int=1000) -> Tuple[bool, str]:
 
     base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
     cmd = base_directory \
@@ -78,13 +78,13 @@ def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False) ->
         + ' shell ' \
         + command
     try:
-        out = Popen(cmd, shell=True)
+        out = Popen(cmd, timeout=timeout, shell=True)
         success = True
     except CalledProcessError as e:
         # if executing command fails restart adb once in case its the cause 
         # else return success=False
         if (not reset) and (reset_adb()):
-            return adb_popen(command, reset=True)
+            return adb_popen(command, timeout=timeout, reset=True)
         out = e.output
         success = False
 
@@ -99,7 +99,7 @@ def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=Fa
         # if executing command fails restart adb once in case its the cause 
         # else return success=False
         if (not reset) and (reset_adb()):
-            return shell(command, string_out, reset=True)
+            return shell(command, string_out, timeout=timeout, reset=True)
         out = e.output
         result = e.returncode
     except TimeoutExpired:
