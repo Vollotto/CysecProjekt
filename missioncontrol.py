@@ -25,7 +25,7 @@ class MissionControl:
     def start(self, apk, output):
         self.path_to_apk = apk		 
         self.path_to_result = output
-        # get package name of target app
+        # setup emulator and get package name and x86 variant
         self.package, self.x86 = setup(apk)
         return "App successful installed"
 
@@ -33,7 +33,7 @@ class MissionControl:
         # create output path
         path = self.path_to_result + name + "_tmp.txt"
         item = None
-        # new instance of module
+        # new instance of selected module
         if name == "strace":
             item = Strace(path, self.x86)
         if name == "vpn":
@@ -45,10 +45,12 @@ class MissionControl:
         return item
 
     def stop_process(self, name):
+        # get instance of the running module chosen by name
         item = self.current_process_list.get(name)
+        # stop the tracing module
         item.stop(self.path_to_result)
         if not self.finish:
-            del self.current_process_list[name]  # remove module from running process_list
+            del self.current_process_list[name]
 
     def artist(self, stop):
         artist_out = ""
@@ -56,13 +58,16 @@ class MissionControl:
             self.stop_process("artist")
             return "Method tracing stopped."
         else:
-            if not self.instrumented:	    # check if app was instrumented before
+            # check if app was instrumented before
+            if not self.instrumented:
+                # if not instrument
                 success = Artist.instrument(self.package, self.x86)
                 if success:
                     artist_out = "instrumentation successful.\n"
                     self.instrumented = True
                 else:
                     return "instrumentation failed."
+            # start artist tracing
             artist_item = self.start_process("artist")
             self.current_process_list["artist"] = artist_item
             return artist_out + "Method tracing started."
@@ -91,27 +96,31 @@ class MissionControl:
 
     def vpn(self, stop):
         if stop:
+            # stop network logging
             self.stop_process("vpn")
             return "Network tracing stopped."
         else:
+            # start vpn tracing
             vpn_item = self.start_process("vpn")
             self.current_process_list["vpn"] = vpn_item
             return "Network tracing started."
 
     def strace(self, stop):
         if stop:
+            # stop strace
             self.stop_process("strace")
             return "strace stopped."
         else:
+            # strace tracing enabled so pids need to be selected
             self.select_pids = True
             strace_item = self.start_process("strace")
-            # strace started successful
             # add strace to running modules
             self.current_process_list["strace"] = strace_item
             return "strace started."
 
     def events(self, stop):
         if stop:
+            # send interrupt to stop event stimulation
             event_item, proc = self.current_process_list.get("events")
             event_item.interrupt()
             proc.terminate()
@@ -119,8 +128,11 @@ class MissionControl:
             if not self.finish:
                 del self.current_process_list["events"]
         else:
+            # start app so that there is a pid for strace
             self.generate_pid()
-            event_item = EventStimulation(self.package)
+            path = self.path_to_result + "events_send.txt"
+            # start event stimulation
+            event_item = EventStimulation(self.package, path)
             proc = Process(target=event_item.stimulate)
             proc.start()
             self.current_process_list["events"] = (event_item, proc)
@@ -131,11 +143,13 @@ class MissionControl:
         for string in self.current_process_list:
             fun = self.select_function(string)
             print(fun(True))
+        # if strace was used filter strace output
         if self.select_pids:
             Strace.grep_pids(self.path_to_result, self.pids)
         return "Stopped analysis! Shutting down."
 
     def generate_pid(self):
+        # use androguard to start app once and get a pid
         self.pids.append(Androguard.generate_pid(self.path_to_apk, self.package))
 
     def select_function(self, module_string):

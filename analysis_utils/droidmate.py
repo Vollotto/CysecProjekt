@@ -21,8 +21,17 @@ class Droidmate:
         # check if we are not yet connected
         if not self.connected:
             # wait until droidmate is ready
+            empty_lines = 0
             out = str(self.droidmate.stdout.readline(), encoding='ascii')
             while "Waiting for incoming connection" not in out:
+                if out == "":
+                    empty_lines += 1
+                else:
+                    empty_lines = 0
+                if empty_lines > 20:
+                    raise RuntimeError("Droidmate encountered a problem when building,\n"
+                                       " for detailed logs consider the logs in "
+                                       "VmCeptionHandler/analysis_utils/droidmate/output_device1")                
                 if "BUILD FAILED" in out or "FAILURE" in out:
                     raise RuntimeError("Droidmate encountered a problem when building,\n"
                                        " for detailed logs consider the logs in "

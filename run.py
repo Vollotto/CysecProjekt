@@ -12,13 +12,14 @@ from missioncontrol import MissionControl
 
 class Runner(object):
     
-    def __init__(self, time):
+    def __init__(self, time, snapshot):
         self.instrumented = False
         self.control = None
         self.running_modules = []
         self.possible_modules = ["strace", "network", "artist", "exploration", "events"]
         self.timeout = time
-   
+        self.snapshot = snapshot
+ 
     def strace(self, stop):
         try:
             print(self.control.strace(stop))
@@ -104,8 +105,11 @@ class Runner(object):
         return True
 
     @staticmethod
-    def kill_emulator():
+    def kill_emulator(snapshot):
+        
         try:
+            if snapshot:
+                check_output("VBoxManage snapshot LInux take 'TODO'", shell=True)
             java_pids = str(check_output("pgrep java", shell=True), "ascii").split("\n")
             for pid in java_pids[:-1]:
                 try:
@@ -126,10 +130,12 @@ class Runner(object):
                 pass
 
     def run(self, user_mode, start_modules, apk, output):
+        # start emulator and environment
         emulator = Runner.setup()
         if not emulator:
             print("Trying to start emulator for the second time.")
-            Runner.kill_emulator()
+            # in case starting failed cause emulator is still running
+            Runner.kill_emulator(False)
             emulator = Runner.setup()
             if not emulator:
                 sys.exit("Failed to setup emulator.")
@@ -137,21 +143,27 @@ class Runner(object):
         self.control = MissionControl()
         try:
             try:
+                # prepare analysis(emulator)
                 print(self.control.start(apk, output))
             except RuntimeError as error:
                 sys.exit(error.args)
-
+            # start all modules specified by the command line arguments
             for command in start_modules:
                 func = self.function_selector(command)
                 func(False)
+            # if no manual exploration(= user mode), end analysis
             if not user_mode:
+                # stop all modules running
                 print(self.control.stop())
-                Runner.kill_emulator()
+                # kill emulator
+                Runner.kill_emulator(self.snapshot)
             else:
+                # start app and select pid
                 self.control.generate_pid()
                 print("User mode turned on")
                 stop = False
                 while not stop:
+                    # list running and possible modules
                     print("Currently running:")
                     module_str = ""
                     for run_module in self.running_modules:
@@ -162,10 +174,13 @@ class Runner(object):
                     for run_module in self.possible_modules:
                         module_str = module_str + run_module + " "
                     print(module_str)
-                    command = input("Enter next command:")
+                    # get new command from user input
+                    command = input("Enter module to start(input:<module>) or stop(input:<module> stop):")
                     command = command.split(" ")
+                    # check if input is stop module command
                     if len(command) > 1:
                         if command[1] == "stop":
+                            # check if input is a valid running module and stop it
                             if command[0] in self.running_modules:
                                 func = self.function_selector(command[0])
                                 func(True)
@@ -174,6 +189,7 @@ class Runner(object):
                         else:
                             print("No valid command.")
                     else:
+                        # check if command is valid module and not already running
                         if command[0] in self.possible_modules:
                             if command[0] in self.running_modules:
                                 print("Module already running.")
@@ -181,20 +197,22 @@ class Runner(object):
                                 func = self.function_selector(command[0])
                                 func(False)
                         else:
+                            # stop command ends analysis
                             if command[0] == "stop":
                                 print(self.control.stop())
-                                Runner.kill_emulator()
+                                Runner.kill_emulator(self.snapshot)
                                 break
                             print("Invalid command.")
+        # catch all Exceptions to avoid interferring with later runs
         except KeyboardInterrupt as key:
             print(key.args)
             print(self.control.stop())
-            Runner.kill_emulator()
-            
+            Runner.kill_emulator(self.snapshot)
+            raise
         except Exception as err:
             print(err.args)
             print(self.control.stop())
-            Runner.kill_emulator()
+            Runner.kill_emulator(self.snapshot)
             raise
 
 
@@ -213,18 +231,22 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--events", help="activate event stimulation", action="store_true")
     parser.add_argument("-f", "--full", help="activates all modules", action="store_true")
     parser.add_argument("-t", "--time", help="time for event stimulation", default=30, type=int)
+    parser.add_argument("--snapshot", help="take snapshot at the end of analysis", action="store_true")
 
     args = parser.parse_args()
 
+    # full means all modules should be enabled
     if args.full:
         args.strace = True
         args.network = True
         args.exploration = True
         args.artist = True
         args.events = True
+        args.snapshot = True
 
     target = Path(args.apk)
 
+    # check for errors in parameters
     if not target.is_file():
         sys.exit("Passed target path needs to be an APK-File")
 
@@ -242,6 +264,7 @@ if __name__ == "__main__":
             if exception.errno != errno.EEXIST:
                 sys.exit("Failed to create output directory")
 
+    # select modules to be run
     modules = []
 
     if args.strace:
@@ -258,7 +281,8 @@ if __name__ == "__main__":
 
     start = datetime.now()
     try:
-        runner = Runner(args.time)
+        # start analysis
+        runner = Runner(args.time, args.snapshot)
         runner.run(args.user, modules, args.apk, args.outputpath)
     except Exception:
         print("Analysis duration: " + str(datetime.now() - start))

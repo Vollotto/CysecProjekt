@@ -172,12 +172,14 @@ class Androguard:
                 self.message = self.message + "\n\n"
 
             self.log_success()
-
+            self.log(self.message)
         except TimeoutError:
             self.log_success()
+            self.log(self.message)
             raise TimeoutError(self.message, pids)
         except KeyboardInterrupt:
             self.log_success()
+            self.log(self.message)
             raise KeyboardInterrupt(self.message, pids)
 
         return pids, self.droidmate, self.message
@@ -198,11 +200,13 @@ class Androguard:
         check = False
         for i in range(0, 60):
             time.sleep(1)
-            if adbutils.adb_shell(cmd, device="emulator-5554", timeout=180)[1] != "":
+            output = adbutils.adb_shell(cmd, device="emulator-5554", timeout=180)[1]
+            if  output != "":
                 check = True
                 break
         if not check:
             raise TimeoutError
+        
         output = re.sub('\s+', ',', output)
         try:
             pid = output.split(',')[1]

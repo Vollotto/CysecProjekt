@@ -8,25 +8,29 @@ from analysis_utils import adbutils
 
 class EventStimulation:
 
-    def __init__(self, package):
+    def __init__(self, package, output_path):
         self.system_events = []
         self.term = False
         self.lock = threading.Lock()
         self.package = package
+        self.output = open(output_path, "w")
         path = os.getcwd() + '/broadcast_actions.txt'
         with open(path) as events:
             self.system_events = events.read().splitlines()
 
     def stimulate(self):
         count = 0
+        # iterate over list of all standard broadcast_actions
         while (not self.check_interrupted()) and (count < len(self.system_events)):
             action = self.system_events[count]
             count += 1
             self.log('Sending system event -- action: ' + action)
+            # send broadcast to target apk
             self.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
             wait = randint(5, 12)
             self.log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)
+        self.output.close()
 
     def check_interrupted(self):
         self.lock.acquire()
@@ -37,7 +41,7 @@ class EventStimulation:
         return tmp
 
     def log(self, log_string):
-        print('[' + str(datetime.datetime.now()) + '] ' + log_string)
+        self.output.write('[' + str(datetime.datetime.now()) + '] ' + log_string + "\n")
 
     def interrupt(self):
         self.lock.acquire()

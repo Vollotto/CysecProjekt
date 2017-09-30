@@ -68,7 +68,8 @@ def adb_shell(command: str, string_out: bool=True, device: Union[str, None]=None
     return shell(cmd, string_out=string_out, timeout=timeout)
 
 
-def adb_popen(command: str, device: Union[str, None]=None) -> Tuple[bool, str]:
+# start subprocess for the given adb command
+def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False) -> Tuple[bool, str]:
 
     base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
     cmd = base_directory \
@@ -80,21 +81,25 @@ def adb_popen(command: str, device: Union[str, None]=None) -> Tuple[bool, str]:
         out = Popen(cmd, shell=True)
         success = True
     except CalledProcessError as e:
-        if reset_adb():
-            return adb_popen(command)
+        # if executing command fails restart adb once in case its the cause 
+        # else return success=False
+        if (not reset) and (reset_adb()):
+            return adb_popen(command, reset=True)
         out = e.output
         success = False
 
     return success, out
 
-
-def shell(command: str, string_out: bool=True, timeout: int = 1000) -> Tuple[bool, str]:
+# execute adb shell command
+def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=False) -> Tuple[bool, str]:
     try:
         out = check_output(command.split(" "), stderr=STDOUT, timeout=timeout)
         result = 0
     except CalledProcessError as e:
-        if reset_adb():
-            return shell(command, string_out)
+        # if executing command fails restart adb once in case its the cause 
+        # else return success=False
+        if (not reset) and (reset_adb()):
+            return shell(command, string_out, reset=True)
         out = e.output
         result = e.returncode
     except TimeoutExpired:
@@ -102,7 +107,7 @@ def shell(command: str, string_out: bool=True, timeout: int = 1000) -> Tuple[boo
 
     return result == 0, out if not string_out else out.decode()
 
-
+# try to establish adb connection to emulator
 def reset_adb():
     (success, output) = adb_devices(device="emulator-5554")
     count = 0
