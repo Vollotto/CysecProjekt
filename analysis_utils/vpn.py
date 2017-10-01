@@ -24,7 +24,7 @@ class Vpn:
             raise RuntimeError(e.output)
 
         # tcpdump command
-        tcpdump_cmd = 'sudo tcpdump -i tun0 -v -w ' + self.path
+        tcpdump_cmd = 'tcpdump -i tun0 -v -w ' + self.path
         # try to start tcpdump
         try:
             self.tcpdump = subprocess.Popen(tcpdump_cmd, shell=True, stderr=subprocess.PIPE)
