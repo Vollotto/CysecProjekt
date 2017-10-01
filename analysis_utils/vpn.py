@@ -19,7 +19,7 @@ class Vpn:
                                       ' 40009 test -m 1400 -a 10.0.0.2 32 -d 8.8.8.8 -r 0.0.0.0 0 -z ' + self.package
         # try to start vpn server
         try:
-            self.vpn_server = subprocess.Popen(server_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.vpn_server = subprocess.Popen(server_cmd, shell=True)
         except subprocess.CalledProcessError as e:
             raise RuntimeError(e.output)
 

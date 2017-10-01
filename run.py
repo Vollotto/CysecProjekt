@@ -101,6 +101,14 @@ class Runner(object):
             check_output("VBoxManage snapshot LInux restore 'Droidsand'", shell=True)
             print("Starting emulator.")
             check_output("VBoxManage startvm LInux", shell=True)
+            try:
+                vpn_pids = str(check_output("pgrep VpnServer", shell=True), "ascii").split("\n")
+                if len(vpn_pids) > 0:
+                    for pid in vpn_pids[:-1]:
+                        cmd = "kill " + str(pid)
+                        check_output(cmd, shell=True)
+            except CalledProcessError:
+                pass
         except CalledProcessError as error:
             print(error.output)
             return False
