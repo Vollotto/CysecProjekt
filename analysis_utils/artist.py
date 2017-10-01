@@ -122,6 +122,7 @@ class Artist:
         adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
         artist_cmd = adb_path + "adb logcat > " + self.path
         self.artist_proc = Popen(artist_cmd, shell=True)
+        self.running = True
         
 
 
