@@ -68,6 +68,7 @@ class Runner(object):
         print(artist_success)
 
     def events(self, _):
+        print("Event stimulation started")
         try:
             self.control.events(False)
         except RuntimeError as error:
@@ -75,6 +76,7 @@ class Runner(object):
             return
         sleep(self.timeout)
         self.control.events(True)
+        print("event stimulatrion ended.")
 
     def function_selector(self, module_string):
         function_selector = {

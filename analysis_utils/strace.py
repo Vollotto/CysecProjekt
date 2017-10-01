@@ -44,8 +44,8 @@ class Strace:
         
         adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
         strace_cmd = adb_path + "adb shell strace -f -p " + pid + " > " + self.path
-        print(strace_cmd)
         self.strace_proc = Popen(strace_cmd, shell=True)
+        self.running = True
 
     def stop(self, path):
         if self.running:
