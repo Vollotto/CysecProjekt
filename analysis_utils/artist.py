@@ -88,8 +88,8 @@ class Artist:
                 dex2oat_cmd += " --instruction-set=x86" \
                                " --instruction-set-features=smp,ssse3,sse4.1,sse4.2,-avx,-avx2" \
                                " --instruction-set-variant=x86 --instruction-set-features=default'"
+            check_output(dex2oat_cmd, shell=True)
             
-            adbutils.adb_shell(dex2oat_cmd, device="emulator-5554")
             if "No such file or directory" not in adbutils.adb_shell("ls " + path)[1]:
                 return True
             else:
