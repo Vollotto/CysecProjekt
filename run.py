@@ -59,6 +59,7 @@ class Runner(object):
             if "instrumentation failed" in artist_success:
                 print("Artist instrumentation failed, artist disabled")
                 self.possible_modules = ["strace", "network", "exploration", "events"]
+                return
             else:
                 self.instrumented = True
         if stop:

@@ -19,6 +19,9 @@ def setup(path):
         adbutils.adb_shell("date `date +%m%d%H%M%Y.%S`", device="emulator-5554")
         # clear logcat
         adbutils.shell("adb -s emulator-5554 logcat -c")
+        adbutils.adb_shell("setprop dalvik.vm.isa.x86.features default", device="emulator-5554")
+        adbutils.adb_shell("setprop dalvik.vm.isa.x86.variant x86")
+     
         return package, x86
     else:
         raise RuntimeError(install_output)
