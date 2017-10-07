@@ -69,7 +69,7 @@ class Artist:
                                                                    + app + ".apk", device="emulator-5554")[1])
             # run optimization and artist injections again
             try:
-                check_output("rm " + app_merged_signed, device="emulator-5554")
+                check_output("rm " + app_merged_signed, shell=True)
             except CalledProcessError:
                 pass
             dex2oat_cmd = "adb shell 'export LD_LIBRARY_PATH=/data/app/saarland.cispa.artist.artistgui-1/" \
