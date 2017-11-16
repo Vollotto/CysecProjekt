@@ -1,12 +1,14 @@
 from subprocess import check_output, CalledProcessError, STDOUT, Popen, TimeoutExpired
 from typing import Union, Tuple
 from time import sleep
+import os
+
+BASE_DIRECTORY = os.environ["ANDROID_HOME"]
 
 
 def adb_devices(string_out: bool = True, device: Union[str, None]=None, timeout: int = 1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' devices'
@@ -15,8 +17,7 @@ def adb_devices(string_out: bool = True, device: Union[str, None]=None, timeout:
 
 def adb_kill_server(string_out: bool = True, device: Union[str, None]=None, timeout: int = 1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' kill-server'
@@ -25,8 +26,7 @@ def adb_kill_server(string_out: bool = True, device: Union[str, None]=None, time
 
 def adb_install(path: str, string_out: bool = True, reinstall: bool = True, device: Union[str, None] = None, timeout: int = 1000) \
         -> Tuple[bool, str]:
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    command = base_directory \
+    command = BASE_DIRECTORY \
         + '/platform-tools/adb ' \
         + (('-s ' + device + ' ') if device is not None else '') \
         + 'install ' \
@@ -37,8 +37,7 @@ def adb_install(path: str, string_out: bool = True, reinstall: bool = True, devi
 
 def adb_pull(path: str, destination: str, string_out: bool=True, device: Union[str, None]=None, timeout: int=1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' pull ' \
@@ -48,8 +47,7 @@ def adb_pull(path: str, destination: str, string_out: bool=True, device: Union[s
 
 def adb_push(path: str, destination: str, string_out: bool=True, device: Union[str, None]=None, timeout: int = 1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' push ' \
@@ -59,8 +57,7 @@ def adb_push(path: str, destination: str, string_out: bool=True, device: Union[s
 
 def adb_shell(command: str, string_out: bool=True, device: Union[str, None]=None, timeout: int = 1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' shell ' \
@@ -71,8 +68,7 @@ def adb_shell(command: str, string_out: bool=True, device: Union[str, None]=None
 # start subprocess for the given adb command
 def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False, timeout: int=1000) -> Tuple[bool, str]:
 
-    base_directory = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n")
-    cmd = base_directory \
+    cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
         + ((' -s ' + device) if device is not None else '') \
         + ' shell ' \
@@ -89,6 +85,7 @@ def adb_popen(command: str, device: Union[str, None]=None, reset: bool=False, ti
         success = False
 
     return success, out
+
 
 # execute adb shell command
 def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=False) -> Tuple[bool, str]:
@@ -107,6 +104,7 @@ def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=Fa
         raise TimeoutError
 
     return result == 0, out if not string_out else out.decode()
+
 
 # try to establish adb connection to emulator
 def reset_adb():

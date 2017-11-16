@@ -1,10 +1,11 @@
 import datetime
 import re
 import time
-from subprocess import check_output, CalledProcessError
-from analysis_utils import adbutils
+from analysis_utils import adbutils, droidmate
 from androguard.core.bytecodes import apk
-from analysis_utils.droidmate import Droidmate
+import os
+import glob
+import shutil
 
 
 class Androguard:
@@ -39,26 +40,20 @@ class Androguard:
         adbutils.adb_shell(cmd, device="emulator-5554")
         return Androguard.get_pid(package)
 
-    def explore(self, droidmate):
+    def explore(self, with_droidmate):
         pids = []
         try:
             self.log("Starting exploration")
             # pass target apk to droidmate
-            apk_file = "Fail"
-            try:
-                apk_file = str(check_output("pwd", shell=True), "ascii").strip("\n") + "/analysis_utils/droidmate/dev/droidmate/apks"
-                check_output("rm -r " + apk_file + "/*", shell=True)
-            except CalledProcessError:
-                pass
-            try:
-                check_output("cp " + self.apk + " " + apk_file, shell=True)
-            except CalledProcessError:
-                self.droidmate = False
-                self.message = "Failed to place target apk in droidmate folder."
+            apk_file = os.getcwd() + "/analysis_utils/droidmate/dev/droidmate/apks"
+            files = glob.glob(apk_file + "/*")
+            for f in files:
+                os.remove(f)
+            shutil.copy2(self.apk, apk_file)
             if self.droidmate:
                 # prepare connection to droidmate
                 self.log("Setting up Droidmate")
-                droidmate_conn = Droidmate()
+                droidmate_conn = droidmate.Droidmate()
                 try:
                     droidmate_conn.send_go()
                 except RuntimeError as err:
@@ -158,7 +153,7 @@ class Androguard:
             self.activity_max = len(activities)
             self.log("#####ACTIVITIES#####")
             for activity in activities:
-                activity  = str(activity, "ascii")
+                activity = str(activity, "ascii")
                 self.log(activity)
                 pid = self.explore_activity(activity, package_name, droidmate_conn)
                 self.activity_count += 1
@@ -198,10 +193,11 @@ class Androguard:
     def get_pid(package):
         cmd = 'ps | grep ' + package
         check = False
+        output = ""
         for i in range(0, 60):
             time.sleep(1)
             output = adbutils.adb_shell(cmd, device="emulator-5554", timeout=180)[1]
-            if  output != "":
+            if output != "":
                 check = True
                 break
         if not check:

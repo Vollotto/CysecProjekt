@@ -1,6 +1,7 @@
 from analysis_utils import adbutils
-from subprocess import Popen, check_output, CalledProcessError, PIPE
+from subprocess import Popen, check_output, CalledProcessError
 from time import sleep
+import os
 
 
 class Artist:
@@ -31,7 +32,7 @@ class Artist:
         # wait till new base.odex is created
         for i in range(0, 240):
             sleep(5)
-            ls_out = str(check_output("adb shell ls -al " + path, shell=True), "ascii")
+            ls_out = adbutils.adb_shell("ls -al " + path, device="emulator-5554")
             # artistgui cleanup sets permissions to 777 -> artist success
             if "-rwxrwxrwx" in ls_out:
                 success = True
@@ -69,10 +70,10 @@ class Artist:
                                                                    + app + ".apk", device="emulator-5554")[1])
             # run optimization and artist injections again
             try:
-                check_output("rm " + app_merged_signed, shell=True)
+                os.remove(app_merged_signed)
             except CalledProcessError:
                 pass
-            dex2oat_cmd = "adb shell 'export LD_LIBRARY_PATH=/data/app/saarland.cispa.artist.artistgui-1/" \
+            dex2oat_cmd = "'export LD_LIBRARY_PATH=/data/app/saarland.cispa.artist.artistgui-1/" \
                           "lib/x86_64:/data/user/0/saarland.cispa.artist.artistgui/files/artist/lib/;" \
                           + "/data/user/0/saarland.cispa.artist.artistgui/files/artist/dex2oat " \
                           + "--oat-file=" + path \
@@ -88,7 +89,8 @@ class Artist:
                 dex2oat_cmd += " --instruction-set=x86" \
                                " --instruction-set-features=smp,ssse3,sse4.1,sse4.2,-avx,-avx2" \
                                " --instruction-set-variant=x86 --instruction-set-features=default'"
-            check_output(dex2oat_cmd, shell=True)
+            adbutils.adb_shell(dex2oat_cmd, device="emulator-5554")
+            # check_output(dex2oat_cmd, shell=True)
             
             if "No such file or directory" not in adbutils.adb_shell("ls " + path)[1]:
                 return True
@@ -114,17 +116,15 @@ class Artist:
             check_output("java -jar DexTools.jar " + dex_file + " codelib/classes.dex", shell=True)
             check_output("zip -d " + apk + " " + dex_file, shell=True)
             check_output("zip -g " + apk + " " + dex_file, shell=True)
-            check_output("rm " + dex_file, shell=True)
-        check_output("rm classes" + str(count - 1) + ".dex", shell=True)
+            os.remove(dex_file)
+        os.remove("classes" + str(count - 1) + ".dex")
         return True
 
     def setup(self):
-        adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
+        adb_path = os.environ["ANDROID_HOME"] + "/platform-tools/"
         artist_cmd = adb_path + "adb logcat > " + self.path
         self.artist_proc = Popen(artist_cmd, shell=True)
         self.running = True
-        
-
 
     def stop(self, path):
         if self.running:
@@ -139,5 +139,4 @@ class Artist:
         for lines in inp:
             if "ArtistCodeLib" in lines:
                 output.write(lines)
-        cmd = "rm " + self.path
-        check_output(cmd.split(" "))
+        os.remove(self.path)
