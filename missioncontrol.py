@@ -132,7 +132,7 @@ class MissionControl:
             self.generate_pid()
             path = self.path_to_result + "events_send.txt"
             # start event stimulation
-            event_item = EventStimulation(self.package, path)
+            event_item = EventStimulation(self.package)
             proc = Process(target=event_item.stimulate)
             proc.start()
             self.current_process_list["events"] = (event_item, proc)

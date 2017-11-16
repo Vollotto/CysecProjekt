@@ -8,7 +8,7 @@ from analysis_utils import adbutils
 
 class EventStimulation:
 
-    def __init__(self, package, output_path):
+    def __init__(self, package):
         self.system_events = []
         self.term = False
         self.lock = threading.Lock()
@@ -23,11 +23,11 @@ class EventStimulation:
         while (not self.check_interrupted()) and (count < len(self.system_events)):
             action = self.system_events[count]
             count += 1
-            self.log('Sending system event -- action: ' + action)
+            log('Sending system event -- action: ' + action)
             # send broadcast to target apk
-            self.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
+            log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
             wait = randint(5, 12)
-            self.log('Waiting for ' + str(wait) + ' seconds')
+            log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)
         self.output.close()
 
@@ -39,7 +39,8 @@ class EventStimulation:
             self.lock.release()
         return tmp
 
-    def log(self, log_string):
+    @staticmethod
+    def log(log_string):
         print('[' + str(datetime.datetime.now()) + '] ' + log_string + "\n")
 
     def interrupt(self):

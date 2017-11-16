@@ -59,6 +59,7 @@ class Runner(object):
             if "instrumentation failed" in artist_success:
                 print("Artist instrumentation failed, artist disabled")
                 self.possible_modules = ["strace", "network", "exploration", "events"]
+                return
             else:
                 self.instrumented = True
         if stop:
@@ -68,6 +69,7 @@ class Runner(object):
         print(artist_success)
 
     def events(self, _):
+        print("Event stimulation started")
         try:
             self.control.events(False)
         except RuntimeError as error:
@@ -75,6 +77,7 @@ class Runner(object):
             return
         sleep(self.timeout)
         self.control.events(True)
+        print("event stimulatrion ended.")
 
     def function_selector(self, module_string):
         function_selector = {
@@ -91,7 +94,7 @@ class Runner(object):
         try:
             if "tun0" not in check_output("ifconfig", shell=True).decode():
                 print("Create tunnel interface.")
-                check_output("sudo ./setup_tunnel.sh", shell=True)
+                check_output("./setup_tunnel.sh", shell=True)
             if str(check_output("echo $ANDROID_HOME", shell=True), "ascii") == "":
                 print("Error: ANDROID_HOME needs to be set.")
                 return False
@@ -99,6 +102,14 @@ class Runner(object):
             check_output("VBoxManage snapshot LInux restore 'Droidsand'", shell=True)
             print("Starting emulator.")
             check_output("VBoxManage startvm LInux", shell=True)
+            try:
+                vpn_pids = str(check_output("pgrep VpnServer", shell=True), "ascii").split("\n")
+                if len(vpn_pids) > 0:
+                    for pid in vpn_pids[:-1]:
+                        cmd = "kill " + str(pid)
+                        check_output(cmd, shell=True)
+            except CalledProcessError:
+                pass
         except CalledProcessError as error:
             print(error.output)
             return False
