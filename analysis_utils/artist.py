@@ -1,5 +1,5 @@
 from analysis_utils import adbutils
-from subprocess import Popen, check_output, CalledProcessError
+from subprocess import check_output, CalledProcessError
 from time import sleep
 import os
 

@@ -1,4 +1,3 @@
-from subprocess import Popen
 import re
 import os
 from analysis_utils import adbutils
