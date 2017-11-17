@@ -23,11 +23,11 @@ class EventStimulation:
         while (not self.check_interrupted()) and (count < len(self.system_events)):
             action = self.system_events[count]
             count += 1
-            log('Sending system event -- action: ' + action)
+            EventStimulation.log('Sending system event -- action: ' + action)
             # send broadcast to target apk
-            log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
+            EventStimulation.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
             wait = randint(5, 12)
-            log('Waiting for ' + str(wait) + ' seconds')
+            EventStimulation.log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)
         self.output.close()
 
