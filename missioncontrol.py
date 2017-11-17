@@ -7,6 +7,7 @@ from analysis_utils.androguard import Androguard
 from analysis_utils.event_stimulation import EventStimulation
 
 
+# TODO reimplement error handling, prevent already running
 class MissionControl:
 
     def __init__(self):
@@ -23,11 +24,15 @@ class MissionControl:
         self.finish = False  	        
 
     def start(self, apk, output):
-        self.path_to_apk = apk		 
-        self.path_to_result = output
-        # setup emulator and get package name and x86 variant
-        self.package, self.x86 = setup(apk)
-        return "App successful installed"
+        try:
+            self.path_to_apk = apk
+            self.path_to_result = output
+            # setup emulator and get package name and x86 variant
+            self.package, self.x86 = setup(apk)
+            return True
+        except RuntimeError as err:
+            print(err.args)
+            return False
 
     def start_process(self, name):
         # create output path
@@ -130,7 +135,6 @@ class MissionControl:
         else:
             # start app so that there is a pid for strace
             self.generate_pid()
-            path = self.path_to_result + "events_send.txt"
             # start event stimulation
             event_item = EventStimulation(self.package)
             proc = Process(target=event_item.stimulate)

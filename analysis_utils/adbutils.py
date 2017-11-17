@@ -77,7 +77,7 @@ def adb_popen(command: str, name: str, device: Union[str, None]=None, reset: boo
     try:
         if name not in PROCESS_DICT:
             proc = Popen(cmd, shell=True)
-            PROCESS_DICT[name] = (proc, command)
+            PROCESS_DICT[name] = (proc, cmd)
             success = True
         else:
             print("Error: Process name already in use.")
@@ -122,7 +122,6 @@ def shell(command: str, string_out: bool=True, timeout: int=1000, reset: bool=Fa
 
 
 # try to establish adb connection to emulator
-# TODO restart the procs in PROCESS_DICT
 def reset_adb():
     (success, output) = adb_devices(device="emulator-5554")
     count = 0
@@ -131,6 +130,11 @@ def reset_adb():
         adb_kill_server()
         (success, output) = adb_devices(device="emulator-5554")
     if count != 60:
+        for name in PROCESS_DICT:
+            proc, command = PROCESS_DICT[name]
+            proc.kill()
+            new_proc = Popen(command, shell=True)
+            PROCESS_DICT[name] = (new_proc, command)
         return True
     else:
         return False

@@ -29,7 +29,6 @@ class EventStimulation:
             wait = randint(5, 12)
             EventStimulation.log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)
-        self.output.close()
 
     def check_interrupted(self):
         self.lock.acquire()
