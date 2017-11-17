@@ -1,6 +1,6 @@
 from analysis_utils import adbutils
-import subprocess
-import random
+from subprocess import Popen, CalledProcessError, PIPE
+import os
 
 
 class Vpn:
@@ -13,22 +13,24 @@ class Vpn:
         self.tcpdump = None
 
     def setup(self):
-        base_directory = str(subprocess.check_output("pwd", shell=True), "ascii").strip("\n")
+        base_directory = os.getcwd()
         # setup command to start vpn server
+        # TODO replace this c based vpnserver with a better python solution?
+        # TODO else improve the c vpnserver
         server_cmd = base_directory + '/vpn/VpnServer tun0' \
                                       ' 40009 test -m 1400 -a 10.0.0.2 32 -d 8.8.8.8 -r 0.0.0.0 0 -z ' + self.package
         # try to start vpn server
         try:
-            self.vpn_server = subprocess.Popen(server_cmd, shell=True)
-        except subprocess.CalledProcessError as e:
+            self.vpn_server = Popen(server_cmd, shell=True)
+        except CalledProcessError as e:
             raise RuntimeError(e.output)
 
         # tcpdump command
         tcpdump_cmd = 'tcpdump -i tun0 -v -w ' + self.path
         # try to start tcpdump
         try:
-            self.tcpdump = subprocess.Popen(tcpdump_cmd, shell=True, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
+            self.tcpdump = Popen(tcpdump_cmd, shell=True, stderr=PIPE)
+        except CalledProcessError as e:
             raise RuntimeError(e.output)
         # check if tcpdump started successful
         test_err = str(self.tcpdump.stderr.readline(), "ascii")
@@ -56,6 +58,9 @@ class Vpn:
             return
 
     def cleanup(self, path):
-        vpn_count = subprocess.check_output("ls " + path, shell=True).decode().count("vpn")
-        cmd = "mv " + self.path + " " + path + "vpn" + str(vpn_count) + ".pcap"
-        subprocess.check_output(cmd, shell=True)
+        files = os.listdir(path)
+        vpn_count = 0
+        for f in files:
+            if "vpn" in f:
+                vpn_count += 1
+        os.rename(self.path, path + "vpn" + str(vpn_count) + ".pcap")

@@ -1,7 +1,7 @@
-from subprocess import check_output, Popen, CalledProcessError
+from subprocess import Popen
 import re
+import os
 from analysis_utils import adbutils
-from time import sleep
 
 
 class Strace:
@@ -10,7 +10,7 @@ class Strace:
         self.path = path
         self.x86 = x86
         self.running = False
-        self.log_proc = None
+        self.strace_proc = "strace_proc"
     
     @staticmethod 
     def grep_pids(path, pids):
@@ -41,23 +41,22 @@ class Strace:
         # extract pid from ps output
         ps_out_stripped = (ps_out.strip("\n"))
         pid = re.sub("\s+", ",", ps_out_stripped).split(",")[1]
-        
-        adb_path = str(check_output("echo $ANDROID_HOME", shell=True), "ascii").strip("\n") + "/platform-tools/"
-        strace_cmd = adb_path + "adb shell strace -f -p " + pid + " > " + self.path
-        self.strace_proc = Popen(strace_cmd, shell=True)
-        self.running = True
+        strace_cmd = "shell strace -f -p " + pid + " >> " + self.path
+        self.running = adbutils.adb_popen(strace_cmd, self.strace_proc)
+        if not self.running:
+            raise RuntimeError("Failed to start strace.")
 
     def stop(self, path):
         if self.running:
-            self.strace_proc.kill()
+            adbutils.stop_process(self.strace_proc)
             try:
                 pgrep_success, pgrep_out = adbutils.adb_shell("pgrep strace", device="emulator-5554", timeout=30)
+                if pgrep_success:
+                    for strace_pid in pgrep_out.split("\r\n"):
+                        if strace_pid != "":
+                            adbutils.adb_shell("kill" + strace_pid, device="emulator-5554")
             except TimeoutError:
-                pgrep_success = False
-            if pgrep_success:
-                for strace_pid in pgrep_out.split("\r\n"):
-                    if strace_pid != "":
-                        adbutils.adb_shell("kill" + strace_pid, device="emulator-5554")
+                pass
             self.cleanup(path)
         else:
             return
@@ -74,5 +73,4 @@ class Strace:
         for line in output_tmp:
             output_final.write(line)
         # remove temporary output file
-        rm_cmd = "rm " + self.path
-        check_output(rm_cmd, shell=True)
+        os.remove(self.path)

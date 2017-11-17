@@ -8,8 +8,7 @@ class Artist:
 
     def __init__(self, path):
         self.path = path
-        self.log_proc = None
-        self.artist_proc = None
+        self.artist_proc = "artist_proc"
         self.running = False
 
     @staticmethod
@@ -120,16 +119,17 @@ class Artist:
         os.remove("classes" + str(count - 1) + ".dex")
         return True
 
+    # TODO always logcat if artist true additional grep of ArtistLog
     def setup(self):
-        adb_path = os.environ["ANDROID_HOME"] + "/platform-tools/"
-        artist_cmd = adb_path + "adb logcat > " + self.path
-        self.artist_proc = Popen(artist_cmd, shell=True)
-        self.running = True
+        artist_cmd = "logcat >> " + self.path
+        self.running = adbutils.adb_popen(artist_cmd, self.artist_proc)
+        if not self.running:
+            raise RuntimeError("Failed to start logcat.")
 
     def stop(self, path):
         if self.running:
             # stop subprocess and cleanup logs
-            self.artist_proc.kill()
+            adbutils.stop_process(self.artist_proc)
             self.cleanup(path)
 
     def cleanup(self, path):
