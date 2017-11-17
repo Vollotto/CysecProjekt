@@ -39,3 +39,7 @@ Thumbs.db
 # python cache #
 *.pyc
 *__pycache__*
+
+# Intellij #
+
+*.idea
