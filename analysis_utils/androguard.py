@@ -12,10 +12,12 @@ class Androguard:
 
     def __init__(self, target_apk, path):
         self.apk = target_apk
+
         self.output = path
         self.droidmate = True
         self.message = ""
         self.timeout = 180
+
         self.activity_count = 0
         self.provider_count = 0
         self.service_count = 0

@@ -98,7 +98,6 @@ class Artist:
         else:
             return False
 
-    # TODO check if it works
     @staticmethod
     def prepare_apk(apk):
         old_apk = zipfile.ZipFile(apk, "r")
@@ -121,24 +120,13 @@ class Artist:
         os.rename(dex_file, apk)
         return True
 
-    # TODO always logcat if artist true additional grep of ArtistLog
-    def setup(self):
-        artist_cmd = "logcat >> " + self.path
-        self.running = adbutils.adb_popen(artist_cmd, self.artist_proc)
-        if not self.running:
-            raise RuntimeError("Failed to start logcat.")
-
-    def stop(self, path):
-        if self.running:
-            # stop subprocess and cleanup logs
-            adbutils.stop_process(self.artist_proc)
-            self.cleanup(path)
-
-    def cleanup(self, path):
-        inp = open(self.path, "r")
-        path = path + "/artist.txt"
-        output = open(path, "a")
-        for lines in inp:
-            if "ArtistCodeLib" in lines:
-                output.write(lines)
-        os.remove(self.path)
+    @staticmethod
+    def grep_log(path):
+        log = open(path + "logcat.txt", "r")
+        log_without_artist = open(path + "log_without_artist.txt", "w")
+        artist_log = open(path + "artist_log.txt", "w")
+        for line in log:
+            if "ArtistCodeLib" in line:
+                artist_log.write(line)
+            else:
+                log_without_artist.write(line)

@@ -1,0 +1,10 @@
+- error handling
+- androguard rework -> coverage/duration
+- mission control lacks a few control mechanisms(already running...)
+- remove more subprocesses if possible -> VmApi
+- artist...
+- binder
+- vpnserver
+- create tunnel possible in python? maybe in connection with complete vpn in python
+- vpn app...
+- adb python library? 

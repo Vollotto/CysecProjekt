@@ -4,8 +4,7 @@ import errno
 from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import check_output, CalledProcessError
-from datetime import datetime
-from time import sleep
+from time import sleep, time
 import psutil
 
 from missioncontrol import MissionControl
@@ -14,7 +13,6 @@ from missioncontrol import MissionControl
 class Runner(object):
     
     def __init__(self, time, snapshot):
-        self.instrumented = False
         self.control = None
         self.timeout = time
         self.snapshot = snapshot
@@ -29,14 +27,12 @@ class Runner(object):
             sleep(self.timeout)
             self.control.events(True)
         elif cmd == "exploration":
-            # TODO add time to run
             self.control.androguard(True)
         elif cmd == "artist":
-            self.control.artist(stop)
+            self.control.artist()
         else:
             print("Unknown command.")
 
-    # TODO use vm api instead of subprocess, kniffler
     @staticmethod
     def setup():
         try:
@@ -73,7 +69,6 @@ class Runner(object):
             print(error.output)
             Runner.kill_process_by_name("VirtualBox")
 
-    # TODO recreate user mode
     def run(self, start_modules, apk, output):
         # start emulator and environment
         emulator = Runner.setup()
@@ -87,7 +82,7 @@ class Runner(object):
         self.control = MissionControl()
         try:
             if not print(self.control.start(apk, output)):
-                sys.exit()
+                raise RuntimeError("Analysis setup failed.")
             # start all modules specified by the command line arguments
             for command in start_modules:
                 self.execute_command(command, False)
@@ -96,16 +91,9 @@ class Runner(object):
             # kill emulator
             Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
         # catch all Exceptions to avoid interfering with later runs
-        except KeyboardInterrupt as key:
-            print(key.args)
+        finally:
             print(self.control.stop())
             Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
-            raise
-        except Exception as err:
-            print(err.args)
-            print(self.control.stop())
-            Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
-            raise
 
 
 if __name__ == "__main__":
@@ -151,7 +139,7 @@ if __name__ == "__main__":
         try:
             os.makedirs(args.outputpath)
         except PermissionError:
-            sys.exit("Failed to create output directory")
+            sys.exit("No permission to create output directory")
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 sys.exit("Failed to create output directory")
@@ -170,12 +158,11 @@ if __name__ == "__main__":
     if args.exploration:
         modules = modules + ["exploration"]
 
-    start = datetime.now()
+    start = time()
     try:
         # start analysis
         runner = Runner(args.time, args.snapshot)
         runner.run(modules, args.apk, args.outputpath)
-    except Exception:
-        print("Analysis duration: " + str(datetime.now() - start))
-        raise
-    print("Analysis duration: " + str(datetime.now() - start))
+    finally:
+        print("Analysis duration: " + str(time() - start))
+
