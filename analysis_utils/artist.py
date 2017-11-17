@@ -2,6 +2,7 @@ from analysis_utils import adbutils
 from subprocess import check_output, CalledProcessError
 from time import sleep
 import os
+import zipfile
 
 
 class Artist:
@@ -89,7 +90,6 @@ class Artist:
                                " --instruction-set-features=smp,ssse3,sse4.1,sse4.2,-avx,-avx2" \
                                " --instruction-set-variant=x86 --instruction-set-features=default'"
             adbutils.adb_shell(dex2oat_cmd, device="emulator-5554")
-            # check_output(dex2oat_cmd, shell=True)
             
             if "No such file or directory" not in adbutils.adb_shell("ls " + path)[1]:
                 return True
@@ -98,25 +98,27 @@ class Artist:
         else:
             return False
 
+    # TODO check if it works
     @staticmethod
     def prepare_apk(apk):
-        exists = True
-        count = 2
-        while exists:
-            try:
-                # get all dex files except for the first one which is already merged
-                check_output("unzip -j " + apk + " classes" + str(count) + ".dex", shell=True)
-                count = count + 1
-            except CalledProcessError:
-                exists = False
-        for i in range(2, count - 1):
-            # merge codelib in all dexfiles and put them back into the apk
-            dex_file = "classes" + str(i) + ".dex"
-            check_output("java -jar DexTools.jar " + dex_file + " codelib/classes.dex", shell=True)
-            check_output("zip -d " + apk + " " + dex_file, shell=True)
-            check_output("zip -g " + apk + " " + dex_file, shell=True)
-            os.remove(dex_file)
-        os.remove("classes" + str(count - 1) + ".dex")
+        old_apk = zipfile.ZipFile(apk, "r")
+        new_apk = zipfile.ZipFile("temp.apk", "w")
+        dex_file = "dexfile.dex"
+        for item in old_apk.infolist():
+            buffer = old_apk.read(item.filename)
+            if ("classes.dex" != item.filename) and (".dex" in item.filename):
+                f = open(dex_file, "wb")
+                f.write(buffer)
+                f.close()
+                check_output("java -jar DexTools.jar " + dex_file + " codelib/classes.dex", shell=True)
+                new_apk.write(dex_file, item.filename)
+                os.remove(dex_file)
+            else:
+                new_apk.writestr(item, buffer)
+        old_apk.close()
+        new_apk.close()
+        os.remove(apk)
+        os.rename(dex_file, apk)
         return True
 
     # TODO always logcat if artist true additional grep of ArtistLog

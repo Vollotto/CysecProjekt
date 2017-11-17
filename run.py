@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import check_output, CalledProcessError
 from datetime import datetime
+from time import sleep
 import psutil
 
 from missioncontrol import MissionControl
@@ -24,8 +25,9 @@ class Runner(object):
         elif cmd == "network":
             self.control.vpn(stop)
         elif cmd == "events":
-            # TODO add time to run
-            self.control.events(stop)
+            self.control.events(False)
+            sleep(self.timeout)
+            self.control.events(True)
         elif cmd == "exploration":
             # TODO add time to run
             self.control.androguard(True)
@@ -82,7 +84,6 @@ class Runner(object):
             emulator = Runner.setup()
             if not emulator:
                 sys.exit("Failed to setup emulator.")
-
         self.control = MissionControl()
         try:
             if not print(self.control.start(apk, output)):
