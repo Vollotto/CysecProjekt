@@ -13,7 +13,7 @@ class EventStimulation:
         self.term = False
         self.lock = threading.Lock()
         self.package = package
-        path = os.getcwd() + '/broadcast_actions.txt'
+        path = os.getcwd() + '/docs/broadcast_actions.txt'
         with open(path) as events:
             self.system_events = events.read().splitlines()
 

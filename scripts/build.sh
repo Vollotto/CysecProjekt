@@ -6,6 +6,7 @@
 # ...(jdk8, java_home, python libraries)
 # git repo clonen
 # build.sh ausführen
+cd ..
 
 git submodule update --init
 

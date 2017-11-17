@@ -94,7 +94,7 @@ class Runner(object):
         try:
             if "tun0" not in check_output("ifconfig", shell=True).decode():
                 print("Create tunnel interface.")
-                check_output("./setup_tunnel.sh", shell=True)
+                check_output("./scripts/setup_tunnel.sh", shell=True)
             if str(check_output("echo $ANDROID_HOME", shell=True), "ascii") == "":
                 print("Error: ANDROID_HOME needs to be set.")
                 return False
@@ -288,7 +288,6 @@ if __name__ == "__main__":
         modules = modules + ["events"]
     if args.exploration:
         modules = modules + ["exploration"]
-
 
     start = datetime.now()
     try:
