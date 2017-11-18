@@ -15,8 +15,6 @@ class Vpn:
     def setup(self):
         base_directory = os.getcwd()
         # setup command to start vpn server
-        # TODO replace this c based vpnserver with a better python solution?
-        # TODO else improve the c vpnserver
         server_cmd = base_directory + '/vpn/VpnServer tun0' \
                                       ' 40009 test -m 1400 -a 10.0.0.2 32 -d 8.8.8.8 -r 0.0.0.0 0 -z ' + self.package
         # try to start vpn server
