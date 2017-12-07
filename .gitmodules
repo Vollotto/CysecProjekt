@@ -1,7 +1,6 @@
-[submodule "modules/droidmate_dir"]
-	path = modules/droidmate_dir
-	url = https://github.com/konrad-jamrozik/droidmate.git
-
 [submodule "androguard"]
 	path = androguard_old
 	url = https://github.com/androguard/androguard.git
+[submodule "modules/droidmate_dir"]
+	path = modules/droidmate_dir
+	url = https://github.com/konrad-jamrozik/droidmate.git
