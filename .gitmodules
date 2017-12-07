@@ -1,5 +1,5 @@
 [submodule "analysis_utils/droidmate"]
-	path = analysis_utils/droidmate
+	path = modules/droidmate_dir
 	url = https://github.com/konrad-jamrozik/droidmate.git
 
 [submodule "androguard"]
