@@ -1,4 +1,4 @@
-[submodule "analysis_utils/droidmate"]
+[submodule "modules/droidmate_dir"]
 	path = modules/droidmate_dir
 	url = https://github.com/konrad-jamrozik/droidmate.git
 
