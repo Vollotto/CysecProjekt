@@ -67,7 +67,7 @@ def adb_shell(command: str, string_out: bool=True, device: Union[str, None]=None
 
 
 # start subprocess for the given adb command
-def adb_popen(command: str, name: str, device: Union[str, None]=None, reset: bool=False, timeout: int=1000) -> bool:
+def start_adb_process(command: str, name: str, device: Union[str, None]=None, reset: bool=False, timeout: int=1000) -> bool:
 
     cmd = BASE_DIRECTORY \
         + '/platform-tools/adb' \
@@ -86,14 +86,14 @@ def adb_popen(command: str, name: str, device: Union[str, None]=None, reset: boo
         # if executing command fails restart adb once in case its the cause 
         # else return success=False
         if (not reset) and (reset_adb()):
-            return adb_popen(command, name, timeout=timeout, reset=True)
+            return start_adb_process(command, name, timeout=timeout, reset=True)
         print(e.output)
         success = False
 
     return success
 
 
-def stop_process(name: str) -> bool:
+def stop_adb_process(name: str) -> bool:
     if name in PROCESS_DICT:
         PROCESS_DICT[name][0].kill()
         del PROCESS_DICT[name]
