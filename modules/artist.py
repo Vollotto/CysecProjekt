@@ -1,8 +1,9 @@
-from analysis_utils import adbutils
-from subprocess import check_output, CalledProcessError
-from time import sleep
 import os
 import zipfile
+from subprocess import check_output, CalledProcessError
+from time import sleep
+
+from utils import adb
 
 
 class Artist:
@@ -17,7 +18,7 @@ class Artist:
         # start artistgui instrumentation of target app
         activity = 'saarland.cispa.artist.artistgui' + '/.' + 'MainActivity'
         cmd = 'am start -n ' + activity + ' --es INTENT_EXTRA_PACKAGE ' + app
-        (start_success, start_out) = adbutils.adb_shell(cmd, device='emulator-5554')
+        (start_success, start_out) = adb.adb_shell(cmd, device='emulator-5554')
         # check if artistgui started successful
         if not start_success:
             return False, start_out
@@ -27,12 +28,12 @@ class Artist:
         else:
             path = "/data/app/" + app + "-1/oat/x86_64/base.odex"
         # delete old odex file
-        adbutils.adb_shell("rm " + path, device="emulator-5554")
+        adb.adb_shell("rm " + path, device="emulator-5554")
         success = False
         # wait till new base.odex is created
         for i in range(0, 240):
             sleep(5)
-            ls_out = adbutils.adb_shell("ls -al " + path, device="emulator-5554")
+            ls_out = adb.adb_shell("ls -al " + path, device="emulator-5554")
             # artistgui cleanup sets permissions to 777 -> artist success
             if "-rwxrwxrwx" in ls_out:
                 success = True
@@ -43,7 +44,7 @@ class Artist:
                 break
         # close artistgui
         cmd = 'am force-stop ' + 'saarland.cispa.artist.artistgui'
-        adbutils.adb_shell(cmd, device="emulator-5554")
+        adb.adb_shell(cmd, device="emulator-5554")
         if success:
             return True
         else:
@@ -53,21 +54,21 @@ class Artist:
     @staticmethod
     def handle_fail(app, path, x86):
         # delete invalid odex file
-        adbutils.adb_shell("rm " + path, device="emulator-5554")
+        adb.adb_shell("rm " + path, device="emulator-5554")
         # check if backup of the merged target app has been created
-        ls_out = adbutils.adb_shell("ls /sdcard/", device="emulator-5554")[1]
+        ls_out = adb.adb_shell("ls /sdcard/", device="emulator-5554")[1]
         if app in ls_out:
             # get merged apk and pull it to host
             ls_list = ls_out.split("\r\n")
             app_merged_signed = [x for x in ls_list if app in x][0]
-            print(adbutils.adb_pull("/sdcard/" + app_merged_signed,
-                                    destination=app_merged_signed, device="emulator-5554", timeout=1200)[1])
+            print(adb.adb_pull("/sdcard/" + app_merged_signed,
+                               destination=app_merged_signed, device="emulator-5554", timeout=1200)[1])
             # try to merge dex files with Dexmerger
             if not Artist.prepare_apk(app_merged_signed):
                 return False
             # push the newly merged apk back to emulator
-            print(adbutils.adb_push(app_merged_signed, destination="/sdcard/"
-                                                                   + app + ".apk", device="emulator-5554")[1])
+            print(adb.adb_push(app_merged_signed, destination="/sdcard/"
+                                                              + app + ".apk", device="emulator-5554")[1])
             # run optimization and artist injections again
             try:
                 os.remove(app_merged_signed)
@@ -89,9 +90,9 @@ class Artist:
                 dex2oat_cmd += " --instruction-set=x86" \
                                " --instruction-set-features=smp,ssse3,sse4.1,sse4.2,-avx,-avx2" \
                                " --instruction-set-variant=x86 --instruction-set-features=default'"
-            adbutils.adb_shell(dex2oat_cmd, device="emulator-5554")
+            adb.adb_shell(dex2oat_cmd, device="emulator-5554")
             
-            if "No such file or directory" not in adbutils.adb_shell("ls " + path)[1]:
+            if "No such file or directory" not in adb.adb_shell("ls " + path)[1]:
                 return True
             else:
                 return False

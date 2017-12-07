@@ -1,6 +1,5 @@
 - error handling
 - androguard rework -> coverage/duration
-- mission control lacks a few control mechanisms(already running...)
 - remove more subprocesses if possible -> VmApi
 - artist...
 - binder

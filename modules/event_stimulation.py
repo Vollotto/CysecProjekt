@@ -1,9 +1,10 @@
-import os
-import time
 import datetime
+import os
 import threading
+import time
 from random import randint
-from analysis_utils import adbutils
+
+from utils import adb
 
 
 class EventStimulation:
@@ -25,7 +26,7 @@ class EventStimulation:
             count += 1
             EventStimulation.log('Sending system event -- action: ' + action)
             # send broadcast to target apk
-            EventStimulation.log(adbutils.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
+            EventStimulation.log(adb.adb_shell('am broadcast -a ' + action + ' -p ' + self.package)[1])
             wait = randint(5, 12)
             EventStimulation.log('Waiting for ' + str(wait) + ' seconds')
             time.sleep(wait)

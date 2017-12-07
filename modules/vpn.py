@@ -1,6 +1,7 @@
-from analysis_utils import adbutils
-from subprocess import Popen, CalledProcessError, PIPE
 import os
+from subprocess import Popen, CalledProcessError, PIPE
+
+from utils import adb
 
 
 class Vpn:
@@ -36,8 +37,8 @@ class Vpn:
             raise RuntimeError(test_err)
 
         # start vpn app
-        app_success, app_output = adbutils.adb_shell('am start -n com.example.tobki42.vpnsolution/.MainActivity',
-                                                     device="emulator-5554")
+        app_success, app_output = adb.adb_shell('am start -n com.example.tobki42.vpnsolution/.MainActivity',
+                                                device="emulator-5554")
         # check if vpn app started successful
         if (not app_success) or ("Starting" not in app_output):
             self.vpn_server.kill()

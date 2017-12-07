@@ -1,6 +1,7 @@
-import re
 import os
-from analysis_utils import adbutils
+import re
+
+from utils import adb
 
 
 class Strace:
@@ -29,9 +30,9 @@ class Strace:
     def setup(self):
         # get pid of zygote
         if self.x86:
-            ps_success, ps_out = adbutils.adb_shell("ps | grep zygote", device="emulator-5554")
+            ps_success, ps_out = adb.adb_shell("ps | grep zygote", device="emulator-5554")
         else:
-            ps_success, ps_out = adbutils.adb_shell("ps | grep zygote64", device="emulator-5554")
+            ps_success, ps_out = adb.adb_shell("ps | grep zygote64", device="emulator-5554")
         if not ps_success:
             raise RuntimeError("ps failed.")
         if "zygote" not in ps_out:
@@ -41,19 +42,19 @@ class Strace:
         ps_out_stripped = (ps_out.strip("\n"))
         pid = re.sub("\s+", ",", ps_out_stripped).split(",")[1]
         strace_cmd = "shell strace -f -p " + pid + " >> " + self.path
-        self.running = adbutils.adb_popen(strace_cmd, self.strace_proc)
+        self.running = adb.start_adb_process(strace_cmd, self.strace_proc)
         if not self.running:
             raise RuntimeError("Failed to start strace.")
 
     def stop(self, path):
         if self.running:
-            adbutils.stop_process(self.strace_proc)
+            adb.stop_adb_process(self.strace_proc)
             try:
-                pgrep_success, pgrep_out = adbutils.adb_shell("pgrep strace", device="emulator-5554", timeout=30)
+                pgrep_success, pgrep_out = adb.adb_shell("pgrep strace", device="emulator-5554", timeout=30)
                 if pgrep_success:
                     for strace_pid in pgrep_out.split("\r\n"):
                         if strace_pid != "":
-                            adbutils.adb_shell("kill" + strace_pid, device="emulator-5554")
+                            adb.adb_shell("kill" + strace_pid, device="emulator-5554")
             except TimeoutError:
                 pass
             self.cleanup(path)

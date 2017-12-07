@@ -7,7 +7,7 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 iface=`route | grep '^default' | grep -o '[^ ]*$'`
 
 # Pick a range of private addresses and perform NAT over eth0.
-iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -o $iface -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -o ${iface} -j MASQUERADE
 
 # Create a TUN interface.
 ip tuntap add dev tun0 mode tun

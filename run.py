@@ -3,98 +3,7 @@ import sys
 import errno
 from argparse import ArgumentParser
 from pathlib import Path
-from subprocess import check_output, CalledProcessError
-from time import sleep, time
-import psutil
-
-from missioncontrol import MissionControl
-
-
-class Runner(object):
-    
-    def __init__(self, time, snapshot):
-        self.control = None
-        self.timeout = time
-        self.snapshot = snapshot
-
-    def execute_command(self, cmd, stop):
-        if cmd == "strace":
-            self.control.strace(stop)
-        elif cmd == "network":
-            self.control.vpn(stop)
-        elif cmd == "events":
-            self.control.events(False)
-            sleep(self.timeout)
-            self.control.events(True)
-        elif cmd == "exploration":
-            self.control.androguard(True)
-        elif cmd == "artist":
-            self.control.artist()
-        else:
-            print("Unknown command.")
-
-    @staticmethod
-    def setup():
-        try:
-            if "tun0" not in check_output("ifconfig", shell=True).decode():
-                print("Creating tunnel interface.")
-                check_output("./scripts/setup_tunnel.sh", shell=True)
-            if "ANDROID_HOME" not in os.environ:
-                print("Error: ANDROID_HOME needs to be set.")
-                return False
-            print("Restoring snapshot.")
-            check_output("VBoxManage snapshot LInux restore 'Droidsand'", shell=True)
-            print("Starting emulator.")
-            check_output("VBoxManage startvm LInux", shell=True)
-            Runner.kill_process_by_name("VpnServer")
-        except CalledProcessError as error:
-            print(error.output)
-            return False
-        return True
-
-    @staticmethod
-    def kill_process_by_name(name):
-        for proc in psutil.process_iter():
-            if name in proc.name():
-                proc.kill()
-
-    @staticmethod
-    def kill_emulator(snapshot=False, name=""):
-        Runner.kill_process_by_name("java")
-        try:
-            if snapshot:
-                check_output("VBoxManage snapshot LInux take " + name, shell=True)
-            check_output("VBoxManage controlvm LInux poweroff", shell=True)
-        except CalledProcessError as error:
-            print(error.output)
-            Runner.kill_process_by_name("VirtualBox")
-
-    def run(self, start_modules, apk, output):
-        # start emulator and environment
-        emulator = Runner.setup()
-        if not emulator:
-            print("Trying to start emulator for the second time.")
-            # in case starting failed cause emulator is still running
-            Runner.kill_emulator()
-            emulator = Runner.setup()
-            if not emulator:
-                sys.exit("Failed to setup emulator.")
-        self.control = MissionControl()
-        try:
-            if not print(self.control.start(apk, output)):
-                raise RuntimeError("Analysis setup failed.")
-            # start all modules specified by the command line arguments
-            for command in start_modules:
-                self.execute_command(command, False)
-            # stop all modules running
-            print(self.control.stop())
-            # kill emulator
-            Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
-        # catch all Exceptions to avoid interfering with later runs
-        finally:
-            print(self.control.stop())
-            Runner.kill_emulator(self.snapshot, apk.split("/")[-1])
-
+from time import time
 
 if __name__ == "__main__":
     # main is only used to parse arguments.
@@ -161,8 +70,7 @@ if __name__ == "__main__":
     start = time()
     try:
         # start analysis
-        runner = Runner(args.time, args.snapshot)
-        runner.run(modules, args.apk, args.outputpath)
+        pass
     finally:
         print("Analysis duration: " + str(time() - start))
 

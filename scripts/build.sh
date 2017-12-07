@@ -2,9 +2,8 @@
 
 # VirtualBox installieren
 # Vm importieren
-# Hostonly adapter vboxnet0 erstellen -> VBoxManage hostonlyif create; ifconfig vboxnet0 192.168.56.1 netmask 255.255.255.0
-# ...(jdk8, java_home, python libraries)
-# git repo clonen
+# hostonlysetup.sh
+# dependencies(jdk8, java_home, python libraries, gradle)
 # build.sh ausführen
 cd ..
 
