@@ -61,14 +61,13 @@ class Artist:
             # get merged apk and pull it to host
             ls_list = ls_out.split("\r\n")
             app_merged_signed = [x for x in ls_list if app in x][0]
-            print(adb.adb_pull("/sdcard/" + app_merged_signed,
-                               destination=app_merged_signed, device="emulator-5554", timeout=1200)[1])
+            adb.adb_pull("/sdcard/" + app_merged_signed,
+                         destination=app_merged_signed, device="emulator-5554", timeout=1200)
             # try to merge dex files with Dexmerger
             if not Artist.prepare_apk(app_merged_signed):
                 return False
             # push the newly merged apk back to emulator
-            print(adb.adb_push(app_merged_signed, destination="/sdcard/"
-                                                              + app + ".apk", device="emulator-5554")[1])
+            adb.adb_push(app_merged_signed, destination="/sdcard/" + app + ".apk", device="emulator-5554")
             # run optimization and artist injections again
             try:
                 os.remove(app_merged_signed)
@@ -120,14 +119,3 @@ class Artist:
         os.remove(apk)
         os.rename(dex_file, apk)
         return True
-
-    @staticmethod
-    def grep_log(path):
-        log = open(path + "logcat.txt", "r")
-        log_without_artist = open(path + "log_without_artist.txt", "w")
-        artist_log = open(path + "artist_log.txt", "w")
-        for line in log:
-            if "ArtistCodeLib" in line:
-                artist_log.write(line)
-            else:
-                log_without_artist.write(line)

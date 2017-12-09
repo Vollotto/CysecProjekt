@@ -1,7 +1,5 @@
 import os
-
 from subprocess import check_output, CalledProcessError
-
 from utils import helper, adb
 
 

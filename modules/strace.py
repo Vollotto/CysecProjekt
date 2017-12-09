@@ -17,24 +17,19 @@ class Strace:
         inp = open(path + "strace.txt", "r")
         outp = open(path + "strace_only_target.txt", "w")
         for line in inp:
-            flag = False
             for pid in pids:
-                if pid is None:
-                    continue
-                if pid in line:
-                    flag = True
+                if pid is not None and pid in line:
+                    outp.write(line)
                     break
-            if flag:
-                outp.write(line)
+        outp.close()
+        inp.close()
 
     def setup(self):
         # get pid of zygote
         if self.x86:
-            ps_success, ps_out = adb.adb_shell("ps | grep zygote", device="emulator-5554")
+            _, ps_out = adb.adb_shell("ps | grep zygote", device="emulator-5554")
         else:
-            ps_success, ps_out = adb.adb_shell("ps | grep zygote64", device="emulator-5554")
-        if not ps_success:
-            raise RuntimeError("ps failed.")
+            _, ps_out = adb.adb_shell("ps | grep zygote64", device="emulator-5554")
         if "zygote" not in ps_out:
             # if zygote not in output -> ps failed
             raise RuntimeError("Failed to get pid:\n" + ps_out)
@@ -71,6 +66,7 @@ class Strace:
         # add temporary output file to result file
         output_final.write("New strace instance: ---------")
         for line in output_tmp:
-            output_final.write(line)
+            if line not in output_final:
+                output_final.write(line)
         # remove temporary output file
         os.remove(self.path)

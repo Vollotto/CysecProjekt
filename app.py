@@ -4,7 +4,7 @@ import re
 
 
 class App(object):
-    def __init__(self, path_to_apk):
+    def __init__(self, path_to_apk: str):
         self.path_to_apk = path_to_apk
         self.androlyzed_apk = apk.APK(self.path_to_apk)
         self.package_name = self.androlyzed_apk.get_package()
@@ -22,7 +22,6 @@ class App(object):
 
     def check_x86_version(self):
         zip_apk = zipfile.ZipFile(self.path_to_apk)
-
         lib = False
         for name in [member.filename for member in zip_apk.infolist()]:
             if "lib/" in name:

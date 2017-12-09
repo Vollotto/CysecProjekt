@@ -1,7 +1,7 @@
 import subprocess
 import socket
 import os
-import glob
+from utils import helper
 import shutil
 
 
@@ -16,27 +16,23 @@ class Droidmate:
 
     def build_droidmate(self, apk):
         # clean apk directory of droidmate
-        apk_file = os.getcwd() + "/modules/droidmate_dir/dev/droidmate_dir/apks"
-        files = glob.glob(apk_file + "/*")
-        for f in files:
-            os.remove(f)
+        droid_dir = os.getcwd() + "/modules/droidmate_dir/dev/droidmate_dir/"
+        helper.clean_directory(droid_dir + "apks")
         # place target apk in apk directory
-        shutil.copy2(apk, apk_file)
+        shutil.copy2(apk, droid_dir + "apks")
         # start droidmate build
-        path = os.getcwd() + '/modules/droidmate_dir/dev/droidmate_dir/gradlew'
-        droidmate_cmd = path + " clean :p:com:run"
+        droidmate_cmd = droid_dir + "gradlew clean :p:com:run"
         droid_proc = subprocess.Popen(droidmate_cmd, stdout=subprocess.PIPE, shell=True)
         # wait until droidmate build is complete and its socket open
         empty_lines = 0
-        out = str(self.droidmate.stdout.readline(), encoding='ascii')
+        out = self.droidmate.stdout.readline().decode("ascii")
         while "Waiting for incoming connection" not in out:
             empty_lines = 0 if out else empty_lines + 1
             if "BUILD FAILED" in out or "FAILURE" in out or empty_lines > 20:
                 raise RuntimeError("Droidmate encountered a problem when building,\n"
                                    " for detailed logs consider the logs in "
                                    "VmCeptionHandler/modules/droidmate_dir/output_device1")
-            print(out)
-            out = str(self.droidmate.stdout.readline(), encoding='ascii')
+            out = self.droidmate.stdout.readline().decode("ascii")
         # connect to droidmate
         self.socket.settimeout(180.0)
         self.socket.connect(("localhost", 42042))

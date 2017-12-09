@@ -23,17 +23,17 @@ class Androguard:
     def get_pid(package: str):
         cmd = 'ps | grep ' + package
         count = 0
-        output = ""
-        while output == "":
+        while True:
             output = adb.adb_shell(cmd, device="emulator-5554", timeout=180)[1]
-            if output == "":
+            if output:
+                break
+            else:
                 count += 1
                 if count > 20:
                     raise TimeoutError
                 time.sleep(1)
-        output = re.sub('\s+', ',', output)
         try:
-            return output.split(',')[1]
+            return re.sub('\s+', ',', output).split(',')[1]
         except IndexError:
             return None
 
