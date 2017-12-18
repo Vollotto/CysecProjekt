@@ -2,7 +2,6 @@
 
 # VirtualBox installieren
 # Vm importieren
-# hostonlysetup.sh
 # dependencies(jdk8, java_home, python libraries, gradle)
 # build.sh ausführen
 cd ..
@@ -27,4 +26,6 @@ cd analysis_utils/droidmate/dev/droidmate/
 
 patch gradlew < gradlew.patch
 
+VBoxManage hostonlyif create;
 
+ifconfig vboxnet0 192.168.56.1 netmask 255.255.255.0;
