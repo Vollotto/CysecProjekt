@@ -9,6 +9,7 @@ class VM(object):
 
     def __init__(self, snapshot):
         self.snapshot = snapshot
+        self.running = self.setup_emulator()
 
     def setup_emulator(self):
         try:
@@ -33,7 +34,6 @@ class HostSystem(object):
     def __init__(self):
         self.cleanup()
         self.processes = []
-        pass
 
     # get rid of processes that might interfere with analysis
     @staticmethod
@@ -117,7 +117,7 @@ class GuestSystem(object):
             return True
         else:
             return False
-
+            
     # try to establish adb connection to emulator
     def reset_adb(self):
         success, output = self.execute_adb_command(" devices")

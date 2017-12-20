@@ -12,7 +12,7 @@ mv androguard_old/androguard androguard
 
 rm -rf androguard_old
 
-mv droidmateChanges.patch analysis_utils/droidmate/droidmate.patch
+mv droidmate.patch analysis_utils/droidmate/droidmate.patch
 
 cd analysis_utils/droidmate
 
