@@ -1,6 +1,8 @@
 import os
-from subprocess import check_output, CalledProcessError, TimeoutExpired
-from utils import helper
+from time import sleep
+from typing import Union
+from subprocess import check_output, CalledProcessError, TimeoutExpired, Popen
+from utils import helper, error
 
 BASE_DIRECTORY = os.environ["ANDROID_HOME"]
 
@@ -9,7 +11,7 @@ class VM(object):
 
     def __init__(self, snapshot):
         self.snapshot = snapshot
-        self.running = self.setup_emulator()
+        self.setup_emulator()
 
     def setup_emulator(self):
         try:
@@ -17,37 +19,45 @@ class VM(object):
             check_output("VBoxManage startvm LInux", shell=True)
         except CalledProcessError:
             self.kill_emulator()
-            check_output("VBoxManage snapshot LInux restore 'Droidsand'", shell=True)
-            check_output("VBoxManage startvm LInux", shell=True)
+            try:
+                check_output("VBoxManage snapshot LInux restore 'Droidsand'", shell=True)
+                check_output("VBoxManage startvm LInux", shell=True)
+            except CalledProcessError:
+                helper.kill_process_by_name("VirtualBox")
+                raise RuntimeError("Failed to start VirtualBox.")
 
     def kill_emulator(self, name=None):
-        if self.snapshot:
+        if self.snapshot and name:
             check_output("VBoxManage snapshot LInux take " + name, shell=True)
         try:
             check_output("VBoxManage controlvm LInux poweroff", shell=True)
-        except CalledProcessError as err:
-            print(err.args)
+        except CalledProcessError:
             helper.kill_process_by_name("VirtualBox")
 
 
 class HostSystem(object):
-    def __init__(self):
-        self.cleanup()
-        self.processes = []
 
-    # get rid of processes that might interfere with analysis
+    def __init__(self, setup):
+        self.processes = []
+        if setup:
+            self.setup()
+
     @staticmethod
-    def cleanup():
+    def setup():
+        # kill all processes that might interfere with analysis
         helper.kill_process_by_name("java")
         helper.kill_process_by_name("VpnServer")
         helper.kill_process_by_name("VirtualBox")
-
-    @staticmethod
-    def prepare():
+        # check environment
         if not os.getenv("ANDROID_HOME"):
-            raise RuntimeError
+            raise RuntimeError("environment variable ANDROID_HOME has to be set.")
         if "tun0" not in check_output("ifconfig", shell=True):
-            check_output("./scripts/setup_tunnel.sh", shell=True)
+            try:
+                check_output("./scripts/setup_tunnel.sh", shell=True)
+                if "tun0" not in check_output("ifconfig", shell=True):
+                    raise error.VpnError("Failed to setup tunnel, network tracing disabled.")
+            except CalledProcessError:
+                raise error.VpnError("Failed to setup tunnel, network tracing disabled.")
 
 
 class GuestSystem(object):
@@ -56,9 +66,11 @@ class GuestSystem(object):
         self.name = name
         self.apps_installed = []
         self.processes = {}
-        self.running = self.setup()
+        self.setup()
 
     def setup(self):
+        if not self.check_status():
+            raise RuntimeError("Connecting to emulator with adb failed.")
         self.execute_adb_command(" shell kill \"`pgrep fredhunter`\"", device=self.name)
         self.execute_adb_command("shell date `date +%m%d%H%M%Y.%S`", device=self.name)
         # fix system properties for artist
@@ -66,13 +78,12 @@ class GuestSystem(object):
         self.execute_adb_command("shell setprop dalvik.vm.isa.x86.variant x86")
         # clear logcat
         self.execute_adb_command("logcat -c", device=self.name)
-        return True
 
     def execute_adb_command(self, command: str, device: Union[str, None]=None, timeout: int=300):
         cmd = BASE_DIRECTORY \
             + '/platform-tools/adb' \
             + ((' -s ' + device) if device is not None else '') \
-            + ' '
+            + ' ' \
             + command
         try:
             out = check_output(cmd, shell=True, timeout=timeout)
@@ -91,7 +102,7 @@ class GuestSystem(object):
         cmd = BASE_DIRECTORY \
             + '/platform-tools/adb' \
             + ((' -s ' + device) if device is not None else '') \
-            + ' '
+            + ' ' \
             + command
         try:
             if name not in self.processes:
@@ -110,7 +121,7 @@ class GuestSystem(object):
                 return self.start_adb_process(command, name, device, timeout)
             raise TimeoutError("Emulator crashed.")  #TODO create custom new error type
 
-    def stop_adb_process(self, name: str)
+    def stop_adb_process(self, name: str):
         if name in self.processes:
             self.processes[name][0].kill()
             del self.processes[name]
@@ -130,8 +141,13 @@ class GuestSystem(object):
             for name in self.processes:
                 proc, command = self.processes[name]
                 proc.kill()
-                _, new_proc = self.start_adb_process(command, shell=True)
+                _, new_proc = self.start_adb_process(command, name)
                 self.processes[name] = (new_proc, command)
             return True
         else:
             return False
+
+    def check_status(self):
+        print(self.name)
+        # TODO implement
+        return True

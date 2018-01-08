@@ -1,8 +1,6 @@
 import os
 import re
 
-from utils import adb
-
 
 class Strace:
 
@@ -53,8 +51,6 @@ class Strace:
             except TimeoutError:
                 pass
             self.cleanup(path)
-        else:
-            return
 
     def cleanup(self, path):
         # open output file of strace instance
