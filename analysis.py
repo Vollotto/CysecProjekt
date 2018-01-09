@@ -1,32 +1,32 @@
-# TODO Also Analysis bekommt die Parameter(Module, Zeit, App), erstellt Host, Vm, Gast und App, diese Sachen bekommen
-# TODO dann die einzelnen Module nacheinander. Somit behält die Analysis-Klasse den Überblick und kann gezielt
-# TODO Fehler handlen. Die Routine wird so lange betrieben bis entweder die App fertig oder die Zeit fertig ist.
-# TODO vielleicht kann man in die Module von ner Oberklasse erben lassen? damit könnte man alle gleich aufrufen und
-# TODO gemeinsam abarbeiten. Es müsste vermutlich mindestens zwei Arten geben für Androguard etc und die Tracingmodule.
-# TODO vielleicht kann man jetzt auch den Cleanup komplett dem Environment überlassen? Teste mal wie das ist wenn man den adb proc kill_emulator
-# TODO ob dann der prozess aufm emulator auch stirbt.
-# TODO sowohl die prozesse auf dem emulator als auch auf dem host werden indirekt übers environment aufgerufen, dann
-# TODO kann das nochmal nachräumen in case of errors und man hat die subprocesses alle an einem ort vereint wo sie
-# TODO verwaltet werden können
-# TODO es sollte auch möglich sein mehrere apps gleichzeitig zu installieren und zu überprüfen..., Problem: VPN ?,
-# TODO mehrere packages, easy
+# TODO sowohl die prozesse auf dem emulator als auch auf dem host werden indirekt übers environment aufgerufen
+# TODO vielleicht kann man mehrere apps laufen lassen
+
 import sys
 import app
-from utils.error import VpnError
+from utils.error import VpnError, NotRespondingError
 from environment import VM, HostSystem, GuestSystem
 from typing import List
-
+from modules import strace, artist, androguard, vpn, event_stimulation
+from interruptingcow import timeout
+from time import time
 
 class Analysis(object):
-    def __init__(self, apk_path: str, trace_modules: List[str], exploration_modules: List[str], snapshot: bool,
+
+    def __init__(self, apk_path: str=None, target: app.App=None, trace_modules: List[str], exploration_modules: List[str], snapshot: bool,
                  output_dir: str, max_time: int):
-        self.target = app.App(apk_path)
+        if apk_path:
+            self.target = app.App(apk_path)
+        elif target:
+            self.target = target
+        else:
+            sys.exit("Either path to app or app object has to be given.")
         self.output_dir = output_dir if output_dir.endswith("/") else output_dir + "/"
         self.modules = {}
         self.snapshot = snapshot
         self.time = max_time
         self.trace_modules = trace_modules
         self.exp_modules = exploration_modules
+        self.running_modules = []
         self.host, self.vm, self.guest = self.setup_environment()
 
     def setup_environment(self):
@@ -49,7 +49,45 @@ class Analysis(object):
             sys.exit(err.args[0])
         return host, vm, guest
 
-    # TODO wie machen wir das mit der Zeitbeschränkung? Am Ende sollte es nen kleinen Bericht geben.
-    def run(self):
+    def module_selector(self, module: str):
+        if module == "strace":
+            return strace.Strace(self.host: HostSystem, self.vm: VM, self.guest: GuestSystem, self.target: app.App)
+        elif module == "artist":
+            return artist.Artist(self.host: HostSystem, self.vm: VM, self.guest: GuestSystem, self.target: app.App)
+        elif module == "androguard":
+            return androguard.Androguard(self.host: HostSystem, self.vm: VM, self.guest: GuestSystem, self.target: app.App)
+        elif module == "events":
+            return event_stimulation.EventStimulation(self.host: HostSystem, self.vm: VM, self.guest: GuestSystem, self.target: app.App)
+        elif module == "network":
+            return vpn.Vpn(self.host: HostSystem, self.vm: VM, self.guest: GuestSystem, self.target: app.App)
+        else:
+            raise NotImplementedError
 
+    def run(self):
+        try:
+            with timeout(self.timeout, exception=TimeoutError):
+                start = time()
+                for m in self.trace_modules:
+                    try:
+                        m_item = self.module_selector(m)
+                        m.start_tracing()
+                        self.running_modules.append(m_item)
+                    except NotImplementedError:
+                        print("Invalid module: " + m)
+                for x in range(0, len(self.exp_modules)):
+                    try:
+                        m = self.exp_modules[x]
+                        m_item = self.module_selector(m)
+                        m_item.explore()
+                    except NotImplementedError:
+                        print("Invalid module: " + m)
+                    except NotRespondingError:
+                        self.shut_down()
+                        analysis = Analysis(target=self.target, self.trace_modules, self.exploration_modules, self.snapshot, self.output_dir, self.time - (time() - start))
+                        analysis.run()
+        except TimeoutError:
+            self.shut_down()
+
+    def shut_down():
+        # TODO implement this
         pass
