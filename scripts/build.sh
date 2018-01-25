@@ -12,19 +12,12 @@ mv androguard_old/androguard androguard
 
 rm -rf androguard_old
 
-mv droidmate.patch analysis_utils/droidmate/droidmate.patch
+mv droidmate.patch modules/droidmate_dir/droidmate.patch
 
-cd analysis_utils/droidmate
+cd modules/droidmate_dir
 
+# TODO at the moment droidmate patch is not sufficient has to be merged with gradlew.patch
 git apply droidmate.patch
-
-cd ../..
-
-mv gradlew.patch analysis_utils/droidmate/dev/droidmate/gradlew.patch
-
-cd analysis_utils/droidmate/dev/droidmate/
-
-patch gradlew < gradlew.patch
 
 VBoxManage hostonlyif create;
 
