@@ -28,10 +28,15 @@ class VM(object):
 
     def kill_emulator(self, name=None):
         if self.snapshot and name:
-            check_output("VBoxManage snapshot LInux take " + name, shell=True)
+            try:
+                check_output("VBoxManage snapshot LInux take " + name, shell=True)
+            except CalledProcessError as err:
+                print("Failed to take snapshot:\n" + err.args[0])
         try:
             check_output("VBoxManage controlvm LInux poweroff", shell=True)
-        except CalledProcessError:
+        except CalledProcessError as err:
+            print("Failed to poweroff vm:\n" + err.args[0])
+            print("Killing VirtualBox process.")
             helper.kill_process_by_name("VirtualBox")
 
 
@@ -48,7 +53,7 @@ class HostSystem(object):
         helper.kill_process_by_name("java")
         helper.kill_process_by_name("VpnServer")
         helper.kill_process_by_name("VirtualBox")
-        # check environment
+        # check necessary environment variables
         if not os.getenv("ANDROID_HOME"):
             raise RuntimeError("environment variable ANDROID_HOME has to be set.")
         if "tun0" not in check_output("ifconfig", shell=True):
@@ -56,8 +61,8 @@ class HostSystem(object):
                 check_output("./scripts/setup_tunnel.sh", shell=True)
                 if "tun0" not in check_output("ifconfig", shell=True):
                     raise error.VpnError("Failed to setup tunnel, network tracing disabled.")
-            except CalledProcessError:
-                raise error.VpnError("Failed to setup tunnel, network tracing disabled.")
+            except CalledProcessError as err:
+                raise error.VpnError("Failed to setup tunnel, network tracing disabled:\n" + err.args[0])
 
 
 class GuestSystem(object):
@@ -128,7 +133,7 @@ class GuestSystem(object):
             return True
         else:
             return False
-            
+
     # try to establish adb connection to emulator
     def reset_adb(self):
         success, output = self.execute_adb_command(" devices")

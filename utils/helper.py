@@ -3,7 +3,7 @@ import glob
 import os
 
 
-def kill_process_by_name(name):
+def kill_process_by_name(name: str):
     for proc in psutil.process_iter():
         if name in proc.name():
             proc.kill()

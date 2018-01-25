@@ -16,8 +16,15 @@ mv droidmate.patch modules/droidmate_dir/droidmate.patch
 
 cd modules/droidmate_dir
 
-# TODO at the moment droidmate patch is not sufficient has to be merged with gradlew.patch
 git apply droidmate.patch
+
+cd ../..
+
+mv gradlew.patch modules/droidmate_dir/dev/droidmate/gradlew.patch
+
+cd modules/droidmate_dir/dev/droidmate/
+
+patch gradlew < gradlew.patch
 
 VBoxManage hostonlyif create;
 

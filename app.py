@@ -10,8 +10,11 @@ class App(object):
         self.package_name = self.androlyzed_apk.get_package()
         self.main_activity = self.androlyzed_apk.get_main_activity()
 
+        # used for strace and artist
         self.x86 = self.check_x86_version()
 
+        # entrypoints used by Androguard
+        # IMPORTANT!!! androguard removes from this list, no guarantee that all entrypoints are contained
         self.activities = None
         self.services = None
         self.receivers = None

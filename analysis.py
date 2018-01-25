@@ -1,5 +1,7 @@
 # TODO sowohl die prozesse auf dem emulator als auch auf dem host werden indirekt übers environment aufgerufen
 # TODO vielleicht kann man mehrere apps laufen lassen
+# TODO error handling und shut_down aufrufe müssen angepasst werden...
+# TODO add static analysis modules?? is possible but you know it
 
 import sys
 import app
@@ -74,17 +76,21 @@ class Analysis(object):
                         self.running_modules.append(m_item)
                     except NotImplementedError:
                         print("Invalid module: " + m)
-                for x in range(0, len(self.exp_modules)):
-                    try:
-                        m = self.exp_modules[x]
-                        m_item = self.module_selector(m)
-                        m_item.explore()
-                    except NotImplementedError:
-                        print("Invalid module: " + m)
-                    except NotRespondingError:
-                        self.shut_down()
-                        analysis = Analysis(target=self.target, self.trace_modules, self.exploration_modules, self.snapshot, self.output_dir, self.time - (time() - start))
-                        analysis.run()
+                finished_modules = []
+                try:
+                    for m in self.exp_modules:
+                        try:
+                            m_item = self.module_selector(m)
+                            m_item.explore()
+                            finished_modules.append(m)
+                        except NotImplementedError:
+                            print("Invalid module: " + m)
+                except NotRespondingError:
+                    self.shut_down()
+                    for m in finished_modules:
+                        self.exploration_modules.remove(m)
+                    analysis = Analysis(target=self.target, self.trace_modules, self.exploration_modules, self.snapshot, self.output_dir, self.time - (time() - start))
+                    analysis.run()
         except TimeoutError:
             self.shut_down()
 
